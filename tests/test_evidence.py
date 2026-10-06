@@ -99,3 +99,17 @@ def test_tam_bölmə_api_və_sənəd_cavabda_yoxdur(samples):
         full = client.get(f"/api/checks/{row['id']}/section", params={"title": title}).json()
         assert full["section_title"] == title and "[VÖEN]" in full["text"]
         assert client.get(f"/api/checks/{row['id']}/section", params={"title": "Yoxdur"}).status_code == 404
+
+
+def test_sənəd_strukturu_api(samples):
+    """GET /doc: bölmələr sırası ilə, paraqraflar və cədvəllər; boş yer marker-i mətndə qalır."""
+    from app.main import app
+    row = _run(samples)
+    with TestClient(app) as client:
+        doc = client.get(f"/api/checks/{row['id']}/doc").json()
+        assert [s["id"] for s in doc["sections"]] == sorted((s["id"] for s in doc["sections"]), key=lambda x: int(x[1:]))
+        assert all({"id", "level", "title", "paragraphs", "table_ids"} <= set(s) for s in doc["sections"])
+        table_ids = {t["id"] for t in doc["tables"]}
+        assert all(tid in table_ids for s in doc["sections"] for tid in s["table_ids"])
+        assert any("[VÖEN]" in p for s in doc["sections"] for p in s["paragraphs"])
+        assert client.get("/api/checks/yoxdur/doc").status_code == 404

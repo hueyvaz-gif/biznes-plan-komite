@@ -6,6 +6,7 @@ import { closeDetail } from '../shell/detail.js';
 import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
 import { renderHero } from '../shell/hero.js';
 import { renderSummaryPanel, setFixesOpen } from './summary-panel.js';
+import { docTargets, openDocAt } from './docviewer.js';
 import { renderComparison } from './compare.js';
 import { AG, loadEvents, renderAgents } from './debug-log.js';
 import { renderExtraResults } from './extras.js';
@@ -41,7 +42,6 @@ function renderResults(check) {
   safely('status', () => renderStatusLine(check));
   safely('nəticə', () => renderReport(check, p));
   safely('hero', () => renderHero(check, state.overview));
-  safely('xəritə', () => renderMaps(p));
   safely('əhatə', () => renderScope(p));
   safely('maliyyə', () => renderFinance(p.finance));
   safely('qrafiklər', () => renderCharts(p.finance));
@@ -109,85 +109,24 @@ function renderRulesNote(check) {
   note.textContent = before ? 'v' + check.version + ' statusu cari qaydalarla yenidən hesablanıb: “' + before + '” → “'
     + (verdicts[check.verdict] || check.verdict_label || '') + '”.' : '';
 }
+/** "Sənəddə yeri": sənəd görüntüsü drawer-i hədəfdə açılır; sənəd mətni yoxdursa (köhnə yoxlama) — dəlil paneli. */
 function openFixSource(ref, opener) {
   const p = resultParts(state.check);
-  if (ref.type === 'req') {
-    const item = (p.compliance.items || []).find((i) => i.req_id === ref.id);
-    if (item) openRequirementDetail(item, opener);
-  } else if (ref.type === 'fin') {
-    const c = (p.finance.checks || []).find((x) => x.id === ref.id);
-    if (c) openFinanceDetail(c, opener);
-  } else if (ref.type === 'ph') {
-    const item = (p.ingest.placeholders || [])[ref.index];
-    if (item) openPlaceholderDetail(item, ref.index, opener);
-  }
-}
-/* ── Tələblər xəritəsi və maliyyə zolağı (Xülasə) ───────────────────────── */
-
-const SQ_STATUS = { var: 'var', natamam: 'natamam', yoxdur: 'yoxdur', tetbiq_edilmir: 'na', sened: 'sened', skip: 'skip' };
-function square(statusKey, label, critical) {
-  const sq = el('span', 'sq sq--' + statusKey + (critical ? ' sq--crit' : ''));
-  sq.setAttribute('role', 'img');
-  sq.setAttribute('aria-label', label);
-  sq.title = label;
-  return sq;
-}
-/** Qrup: kvadratlar + ad + mətnlə say ("3/4 var") — yalnız rəngə güvənilmir. */
-function mapGroup(title, squares, countText, ariaLabel, onClick) {
-  const button = el('button', 'mapgroup');
-  button.type = 'button';
-  button.setAttribute('aria-label', ariaLabel);
-  const grid = el('span', 'mapgroup__squares');
-  grid.setAttribute('aria-hidden', 'true');            // təsvir düymənin aria-label-ındadır
-  squares.forEach((sq) => grid.append(sq));
-  button.append(grid, el('span', 'mapgroup__title', title), el('span', 'mapgroup__count', countText));
-  button.addEventListener('click', onClick);
-  return button;
-}
-function renderMaps(p) {
-  const items = (p.compliance.items || []);
-  const groups = new Map();
-  items.forEach((i) => {
-    const key = i.origin === 'elave' ? 'elave' : i.group_id;
-    if (!groups.has(key)) groups.set(key, { id: i.group_id, title: i.group_title, items: [], extra: i.origin === 'elave' });
-    groups.get(key).items.push(i);
-  });
-  const host = $('req-map');
-  host.replaceChildren(...[...groups.values()].map((g) => {
-    // Ortaq sayma qaydası (reqCounts): ayrıca sənəd məxrəcə qatılmır, ayrıca yazılır.
-    const gc = reqCounts(g.items);
-    const ok = gc.answered;
-    const docs = gc.document;
-    const checkable = gc.evaluated;
-    const squares = g.items.map((i) => square(SQ_STATUS[i.status] || 'skip',
-      i.req_id + ' — ' + reqMeta(i).label.toLowerCase(), false));
-    const problems = g.items.filter((i) => ['natamam', 'yoxdur'].includes(i.status)).length;
-    const aria = g.title + ': ' + checkable + ' yoxlanılan tələbdən ' + ok + ' cavablandırılıb'
-      + (problems ? ', ' + problems + ' problemli' : '') + (docs ? ', ' + docs + ' ayrıca sənəd yoxlanılmayıb' : '')
-      + (gc.notChecked ? ', ' + gc.notChecked + ' yoxlanılmadı' : '') + '. Tələblərə keç.';
-    const count = (checkable ? ok + '/' + checkable + ' cavablandırılıb' : '')
-      + (docs ? (checkable ? ' · ' : '') + docs + ' ayrıca sənəd' : '')
-      + (gc.notChecked ? ' · ' + gc.notChecked + ' yoxlanılmadı' : '');
-    return mapGroup(g.title, squares, count, aria, () => {
-      if (g.extra) { selectTab('panel-elave', true); return; }
-      openRequirementGroup(g.id);
-    });
-  }));
-  $('req-mapbox').hidden = groups.size === 0;
-}
-/** Xəritədən: "Standart tələblər" tabını açır, süzgəcləri sıfırlayır, qrupa sürüşür. */
-function openRequirementGroup(groupId) {
-  state.reqGroup = '';
-  state.reqQuery = '';
-  $('req-search').value = '';
-  setRequirementFilter('hamisi');
-  $('req-group').value = '';
-  selectTab('panel-teleb', false);
-  const section = $('reqgroup-' + groupId);
-  if (section) {
-    section.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-    section.querySelector('.reqgroup__title').focus({ preventScroll: true });
-  }
+  const legacy = () => {
+    if (ref.type === 'req') {
+      const item = (p.compliance.items || []).find((i) => i.req_id === ref.id);
+      if (item) openRequirementDetail(item, opener);
+    } else if (ref.type === 'fin') {
+      const c = (p.finance.checks || []).find((x) => x.id === ref.id);
+      if (c) openFinanceDetail(c, opener);
+    } else if (ref.type === 'ph') {
+      const item = (p.ingest.placeholders || [])[ref.index];
+      if (item) openPlaceholderDetail(item, ref.index, opener);
+    }
+  };
+  const key = ref.type === 'req' ? 'req:' + ref.id : ref.type === 'ph' ? 'ph:' + ref.index : ref.type === 'fin' ? 'fin:' + ref.id + ':0' : null;
+  if (!key || !docTargets(state.check).some((t) => t.key === key)) { legacy(); return; }
+  openDocAt(key, { fallback: legacy });
 }
 /** Çapdan əvvəl: süzgəclər sıfırlanır (heç bir sətir itməsin), problemlərin hamısı açılır. */
 function prepareForPrint() {
@@ -199,7 +138,6 @@ function prepareForPrint() {
   setRequirementFilter('hamisi');
   setFixesOpen(true);                                // çapda bütün düzəlişlər
   closeDetail();
-  $('req-mapbox').open = true;                       // bağlı <details> çapda görünmür
   const r = state.check.result || {};
   // Müqayisə və əlavə tələblər yalnız varsa çap olunur.
   $('panel-muqayise').classList.toggle('print-skip', !(r.comparison && r.comparison.available));
@@ -260,4 +198,4 @@ function renderTabCounts(p) {
   layoutTabs();                                      // nişan dəyişdi — zolaq yenidən yerləşir
 }
 
-export { prepareForPrint, renderResults, resultParts, setFixesOpen };
+export { openFixSource, prepareForPrint, renderResults, resultParts, setFixesOpen };

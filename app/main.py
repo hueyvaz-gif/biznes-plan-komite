@@ -468,6 +468,25 @@ async def get_section_text(check_id: str, title: str) -> dict[str, Any]:
     return found
 
 
+@app.get("/api/checks/{check_id}/doc")
+async def get_document(check_id: str) -> dict[str, Any]:
+    """Sənədin strukturu (bölmələr, paraqraflar, cədvəllər) — sənəd görüntüsü drawer-i və mini-xəritə üçün.
+    Yalnız oxuma; mətn yükləmə zamanı saxlanandır, model çağırılmır."""
+    if storage.get(check_id) is None:
+        raise HTTPException(status_code=404, detail="Yoxlama tapılmadı.")
+    doc = storage.doc_get(check_id)
+    if doc is None:
+        raise HTTPException(status_code=404,
+                            detail="Bu yoxlama üçün sənədin mətni saxlanmayıb (köhnə yoxlama).")
+    return {
+        "sections": [{"id": s["id"], "level": s.get("level", 1), "title": s["title"],
+                      "paragraphs": s.get("paragraphs", []), "table_ids": s.get("table_ids", [])}
+                     for s in doc["sections"]],
+        "tables": [{"id": t["id"], "section_id": t.get("section_id"), "caption": t.get("caption"), "rows": t.get("rows", [])}
+                   for t in doc.get("tables", [])],
+    }
+
+
 @app.get("/api/checks/{check_id}/events")
 async def get_events(check_id: str, after: int = 0) -> dict[str, Any]:
     """Agent fəaliyyəti — artımlı: yalnız `after` id-sindən sonrakı hadisələr.

@@ -9,6 +9,7 @@ import { resultParts } from './summary.js';
 import { fmtCheckValue } from './summary-panel.js';
 import { cashflowChart } from './cashflow-chart.js';
 import { donut, gapBars } from './funding-chart.js';
+import { openDocAt } from './docviewer.js';
 import { el as el2 } from '../ui/el.js';
 import { icon as uiIcon } from '../ui/icons.js';
 import { Badge, FilterChips } from '../ui/badge.js';
@@ -175,10 +176,11 @@ function detailContent(c, finance) {
   const snippets = ev.snippets || [];
   if (snippets.length) {
     box.append(el2('section', { class: 'fdet__sec fdet__sec--wide' }, el2('h4', { class: 'fdet__h', text: 'Sənəddə harada yazılıb' }),
-      el2('div', { class: 'fdet__quotes' }, snippets.map((sn) => SourceQuote({
+      el2('div', { class: 'fdet__quotes' }, snippets.map((sn, n) => SourceQuote({
         section: [FIELD_NAMES[sn.field] || sn.label, sn.section_title].filter(Boolean).join(' · '),
         quote: excerpt(sn.text || '', sn.mark), location: sn.table_id ? `Cədvəl ${sn.table_id}` : 'Mətndə',
-        onOpen: sn.section_title ? () => openSection(sn) : null,
+        onOpen: sn.section_id ? () => openDocAt(`fin:${c.id}:${n}`, { fallback: () => openSection(sn) })
+          : sn.section_title ? () => openSection(sn) : null,
       })))));
   } else if (ev.snippets && !ev.cashflow) {
     box.append(el2('p', { class: 'alert alert--warn', text: 'Bu rəqəm sənəddə tapılmadı — model tərəfindən verilən dəyər istifadə olunmayıb.' }));

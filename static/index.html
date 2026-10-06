@@ -648,43 +648,31 @@
 
         <div class="panel" id="panel-teleb" role="tabpanel" aria-labelledby="tab-teleb" tabindex="0" hidden>
           <h2 class="print-only print-title">Standart tələblər</h2>
-          <p class="coverage" id="req-coverage"></p>
-          <details class="mapbox" id="req-mapbox">
-            <summary>Tələblər xəritəsi</summary>
-            <p class="panel__lead">Hər kvadrat bir tələbdir. Qrupa klikləyəndə həmin qrupun tələbləri açılır.</p>
-            <div class="reqmap" id="req-map"></div>
-            <ul class="maplegend" aria-label="Rənglərin izahı">
-              <li><span class="sq sq--var" aria-hidden="true"></span>cavablandırılıb</li>
-              <li><span class="sq sq--natamam" aria-hidden="true"></span>natamam</li>
-              <li><span class="sq sq--yoxdur" aria-hidden="true"></span>cavabsız</li>
-              <li><span class="sq sq--na" aria-hidden="true"></span>tətbiq edilmir</li>
-              <li><span class="sq sq--sened" aria-hidden="true"></span>ayrıca sənəd</li>
-              <li><span class="sq sq--skip" aria-hidden="true"></span>yoxlanılmadı</li>
-            </ul>
-          </details>
+          <section class="finv__lead" aria-labelledby="req-title">
+            <h2 class="sumv__eyebrow" id="req-title">Standart tələblər</h2>
+            <p class="sumv__sentence" id="req-lead"></p>
+            <p class="sumv__sub coverage" id="req-coverage"></p>
+          </section>
+          <h3 class="sr-only" id="req-map-title">Tələblər xəritəsi: qruplar</h3>
+          <div class="reqmap2" id="req-map" role="group" aria-labelledby="req-map-title"></div>
           <div class="alert alert--warn" id="failed-groups" role="status" hidden>
             <p id="failed-groups-text"></p>
             <button class="btn btn--primary" type="button" id="retry-groups-btn">
               <span class="icon" data-icon="refresh" aria-hidden="true"></span>Uğursuz qrupları yenidən yoxla
             </button>
           </div>
-          <div class="toolbar stickyrow">
-            <div class="chips" role="group" aria-label="Status süzgəci">
-              <button class="chip is-on" type="button" data-req="hamisi" aria-pressed="true">Hamısı</button>
-              <button class="chip" type="button" data-req="problem" aria-pressed="false">Problemlilər</button>
-              <button class="chip" type="button" data-req="yoxdur" aria-pressed="false">Yoxdur</button>
-              <button class="chip" type="button" data-req="skip" aria-pressed="false">Yoxlanılmayan</button>
-              <button class="chip" type="button" data-req="sened" aria-pressed="false">Ayrıca sənəd</button>
-            </div>
-            <div class="toolbar__right">
+          <div class="toolbar stickyrow reqbar">
+            <div id="req-filters"></div>
+            <div class="reqbar__right">
               <label class="sr-only" for="req-group">Qrup</label>
-              <select class="input input--inline" id="req-group"></select>
-              <label class="sr-only" for="req-search">Axtarış</label>
-              <input class="input input--inline" type="search" id="req-search"
-                     placeholder="Tələb mətnində axtar…" autocomplete="off">
+              <span class="field field--select"><select class="field__input" id="req-group"></select>
+                <span class="icon" data-icon="chevronDown" aria-hidden="true"></span></span>
+              <label class="sr-only" for="req-search">Tələb mətnində axtar</label>
+              <span class="field field--search"><span class="icon" data-icon="search" aria-hidden="true"></span>
+                <input class="field__input" type="search" id="req-search" placeholder="Axtar: kod və ya mətn…" autocomplete="off"></span>
             </div>
           </div>
-          <p class="empty" id="req-empty" hidden></p>
+          <p class="reqv__count" id="req-count" aria-live="polite"></p>
           <div id="req-groups"></div>
         </div>
 
@@ -702,17 +690,12 @@
         <!-- Boş yerlər -->
         <div class="panel" id="panel-bosyer" role="tabpanel" aria-labelledby="tab-bosyer" tabindex="0" hidden>
           <h2 class="print-only print-title">Doldurulmamış yerlər</h2>
-          <p class="empty" id="ph-empty" hidden>Doldurulmamış yer tapılmadı.</p>
-          <div class="tablewrap">
-            <table class="table table--rows" id="ph-table">
-              <caption class="sr-only">Doldurulmamış yerlər</caption>
-              <thead><tr>
-                <th scope="col">İfadə</th><th scope="col">Bölmə</th>
-                <th scope="col">Yer</th><th scope="col">Kontekst</th>
-              </tr></thead>
-              <tbody id="ph-body"></tbody>
-            </table>
-          </div>
+          <section class="finv__lead" aria-labelledby="ph-title">
+            <h2 class="sumv__eyebrow" id="ph-title">Boş yerlər</h2>
+            <p class="sumv__sentence" id="ph-lead"></p>
+          </section>
+          <div class="phmap" id="ph-map" role="group" aria-label="Boş yerlərin sənəddəki mövqeyi" hidden></div>
+          <ol class="phlist" id="ph-list"></ol>
         </div>
 
         <!-- Agentlər -->

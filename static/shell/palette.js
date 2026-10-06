@@ -10,7 +10,7 @@ import { PRIMARY, debugMode, selectTab } from './tabs.js';
 import { el, nextId } from '../ui/el.js';
 import { icon } from '../ui/icons.js';
 import { reducedMotion } from '../ui/motion.js';
-import { renderRequirements, setRequirementFilter } from '../views/requirements.js';
+import { revealRequirement } from '../views/requirements.js';
 import { setFixesOpen } from '../views/summary.js';
 import { fmtRelative } from '../format.js';
 
@@ -103,15 +103,7 @@ function goTarget(panel, id, before) {
   requestAnimationFrame(() => flash(document.getElementById(id)));
 }
 function goRequirement(code) {
-  selectTab('panel-teleb', false);
-  // Filtr və axtarış hədəfi gizlədə bilər — sıfırlanır.
-  state.reqGroup = '';
-  state.reqQuery = '';
-  if ($('req-group')) $('req-group').value = '';
-  if ($('req-search')) $('req-search').value = '';
-  setRequirementFilter('hamisi');
-  renderRequirements();
-  requestAnimationFrame(() => flash(document.querySelector('.req[data-code="' + CSS.escape(code) + '"]')));
+  revealRequirement(code);
 }
 async function openPlan(plan) {
   try {

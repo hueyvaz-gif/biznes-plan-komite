@@ -16,7 +16,7 @@ import { wireSummary } from './views/summary-panel.js';
 import { closeNav, openNav, setOnline, showView } from './shell/views.js';
 import { AG, renderAgentTable } from './views/debug-log.js';
 import { setFinanceFilter } from './views/finance.js';
-import { renderRequirements, retryFailedGroups, setRequirementFilter } from './views/requirements.js';
+import { renderRequirements, retryFailedGroups, setRequirementFilter, wireRequirements } from './views/requirements.js';
 import { confirmReview, fitArea, reextract, renderReview, renderReviewItems, updateConfirmState } from './views/review.js';
 import { prepareForPrint, setFixesOpen } from './views/summary.js';
 import { addExtraFiles, renderExtraFiles, setExtrasOpen, setPlanMode, showUploadError, submitCheck, suggestExistingPlan, updateExtraTextHint, updateFormState, wireDropzone } from './views/upload-flow.js';
@@ -49,6 +49,7 @@ async function init() {
   wireHero();
   wireShortcuts();
   wireSummary();
+  wireRequirements();
   revealOnce(document.querySelector('.explain__art'));
   $('upload-form').addEventListener('submit', submitCheck);
   $('extra-add').addEventListener('click', () => $('extra-input').click());
@@ -109,9 +110,6 @@ async function init() {
     if (e.key === 'Escape') { closeDetail(); closeNav(); }
   });
   document.querySelectorAll('[data-fin]').forEach((c) => c.addEventListener('click', () => setFinanceFilter(c.dataset.fin)));
-  document.querySelectorAll('[data-req]').forEach((c) => c.addEventListener('click', () => setRequirementFilter(c.dataset.req)));
-  $('req-group').addEventListener('change', (e) => { state.reqGroup = e.target.value; renderRequirements(); });
-  $('req-search').addEventListener('input', (e) => { state.reqQuery = e.target.value.trim().toLowerCase(); renderRequirements(); });
   window.addEventListener('offline', () => setOnline(false));
   window.addEventListener('online', () => setOnline(true));
 

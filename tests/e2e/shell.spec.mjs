@@ -62,7 +62,7 @@ test('tab nişanı ilə panel daxilindəki say eynidir (Maliyyə, Boş yerlər)'
   if (chip !== null) expect(chip.trim()).toBe(fin.trim());
   const holes = await page.locator('#count-bosyer').textContent();
   await page.locator('#tab-bosyer').click();
-  await expect(page.locator('#ph-body tr')).toHaveCount(Number(holes));
+  await expect(page.locator('#ph-list .phcard')).toHaveCount(Number(holes));
 });
 
 test('Ctrl+K → "TS2" → Enter: Tələblər tabı, TS2 sətri fokusda və vurğulanır', async ({ page }) => {
@@ -73,7 +73,7 @@ test('Ctrl+K → "TS2" → Enter: Tələblər tabı, TS2 sətri fokusda və vur�
   await expect(page.locator('.pal__opt.is-active .pal__code')).toHaveText('TS2');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/tab=teleb/);
-  const row = page.locator('.req[data-code="TS2"]');
+  const row = page.locator('.reqrow[data-code="TS2"]');
   await expect(row).toBeFocused();
   await expect(row).toHaveClass(/is-flash/);
 });
