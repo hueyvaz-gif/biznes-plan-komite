@@ -32,3 +32,6 @@ playwright-report/
 
 # Yaradılmış çıxış faylları (PDF hesabatlar və s.)
 output/
+
+# Daxili tapşırıq və yoxlama sənədləri (kökdəki Word faylları)
+/*.docx
