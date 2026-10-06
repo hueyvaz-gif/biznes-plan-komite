@@ -12,7 +12,7 @@ import { DataTable } from '../ui/table.js';
 import { tooltip, toast } from '../ui/overlay.js';
 import { reducedMotion } from '../ui/motion.js';
 import { fmtMoney, fmtNumber, fmtPct, fmtYears, DASH } from '../format.js';
-import { setFinanceFilter, openFinanceDetail } from './finance.js';
+import { setFinanceFilter, openFinanceRow } from './finance.js';
 import { setRequirementFilter } from './requirements.js';
 
 const FIX_SHOW = 6;
@@ -23,14 +23,14 @@ let ctx = null;            // {check, p, report, openSource}
 let econ = null;           // son iqtisadi məlumat (sənəd statusları üçün)
 
 /* ── Rəqəm formatı (vahidə görə) ────────────────────────────────────────── */
-export function fmtCheckValue(value, check, decimals) {
+export function fmtCheckValue(value, check, decimals, signed = false) {
   if (value === null || value === undefined) return DASH;
   const unit = (check && check.unit) || '';
-  if (unit === 'manat') return fmtMoney(value);
-  if (unit === 'ton') return fmtNumber(value) + ' ton';
-  if (unit === '%') return fmtPct(value, { points: true, decimals: decimals ?? 2 });
-  if (unit === 'il') return fmtYears(value, { decimals: decimals ?? 2 });
-  return fmtNumber(value, { maxDecimals: decimals ?? 2 });
+  if (unit === 'manat') return fmtMoney(value, { signed });
+  if (unit === 'ton') return fmtNumber(value, { signed }) + ' ton';
+  if (unit === '%') return fmtPct(value, { points: true, decimals: decimals ?? 2, signed });
+  if (unit === 'il') return (signed && value > 0 ? '+' : '') + fmtYears(value, { decimals: decimals ?? 2 });
+  return fmtNumber(value, { maxDecimals: decimals ?? 2, signed });
 }
 
 /* ── Checklist yaddaşı ──────────────────────────────────────────────────── */
@@ -274,7 +274,7 @@ function renderFinSummary(check, p) {
       { key: 'label', label: 'Nəticə', type: 'status', render: (r) => Badge(r.label, { tone: r.label === 'Dəqiqləşdirmə' ? 'warning' : FIN_TONE[r.status] || 'neutral', size: 'sm' }) },
       { key: 'go', label: 'Ətraflı', type: 'actions', render: (r) => (r.check ? el('button', {
         type: 'button', class: 'btn btn--small', 'aria-label': r.title + ' — necə hesablandı və mənbə',
-        on: { click: (e) => openFinanceDetail(r.check, e.currentTarget) },
+        on: { click: () => openFinanceRow(r.check.id) },
       }, 'Ətraflı', icon('chevronRight', { size: 'sm' })) : null) },
     ],
   }));

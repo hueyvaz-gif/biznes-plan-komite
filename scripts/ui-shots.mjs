@@ -28,7 +28,13 @@ for (const w of widths) {
   page.on('pageerror', (e) => problems.add(`${w} pageerror: ${e.message}`));
   for (const [name, query] of pages) {
     await page.goto(base + query, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(700);
+    await page.waitForTimeout(400);
+    // İlk görünmədə animasiya olunan elementlər (qrafiklər) üçün səhifə sona qədər sürüşdürülür, sonra yuxarı qayıdır.
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.documentElement.scrollHeight; y += 500) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); }
+      scrollTo(0, 0);
+    });
+    await page.waitForTimeout(1200);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (overflow > 0) problems.add(`${w} ${name}: üfüqi daşma ${overflow}px`);
     await page.screenshot({ path: `${out}/${name}-${w}${theme === 'dark' ? '-dark' : ''}.png`, fullPage: true });

@@ -1,83 +1,281 @@
 /* Maliyyə tabı. */
 import { api } from '../core/api.js';
-import { $, badge, el, formatAz, formatValue, group, icon, setBusy, writtenDecimals } from '../core/dom.js';
+import { $, badge, el, formatAz, formatValue, group, setBusy, writtenDecimals } from '../core/dom.js';
 import { STATUS_LABELS } from '../core/labels.js';
 import { state } from '../core/state.js';
 import { openDetail } from '../shell/detail.js';
+import { selectTab } from '../shell/tabs.js';
 import { resultParts } from './summary.js';
+import { fmtCheckValue } from './summary-panel.js';
+import { cashflowChart } from './cashflow-chart.js';
+import { donut, gapBars } from './funding-chart.js';
+import { el as el2 } from '../ui/el.js';
+import { icon as uiIcon } from '../ui/icons.js';
+import { Badge, FilterChips } from '../ui/badge.js';
+import { StatTile, KeyValue, EmptyState } from '../ui/card.js';
+import { DataTable } from '../ui/table.js';
+import { Disclosure, SourceQuote } from '../ui/disclosure.js';
+import { openDrawer } from '../ui/overlay.js';
+import { reducedMotion } from '../ui/motion.js';
+import { fmtMoney, fmtPct } from '../format.js';
 
-/* ── Maliyyə ────────────────────────────────────────────────────────────── */
+/* ── Maliyyə tabı (Faza 4) ──────────────────────────────────────────────
+ * Nəticə cümləsi → 4 KPI (İnvestisiya, NPV, IRR, PP) → yoxlamalar cədvəli (sətir yerində açılır)
+ * → pul axını hekayəsi (FCFF + kumulyativ, bir qrafikdə) → maliyyələşmə (donut + investisiya ↔ mənbələr).
+ * Hər rəqəm API-dən; status etiketi Report.financeLabel (Nəticə tabı ilə eyni). */
+
+const isProblem = (c) => c.status === 'fail' || c.status === 'warn';
+const isFormula = (c) => c.claimed == null && c.computed == null && c.status === 'ok' && c.id === 'fcff_dusturu';
+const lowerFirst = (s) => (s.length > 1 && s[1] === s[1].toLocaleLowerCase('az') ? s.charAt(0).toLocaleLowerCase('az') + s.slice(1) : s);
+const openRows = new Set();
+let filterChips = null;
 
 function setFinanceFilter(name) {
   state.finFilter = name;
-  document.querySelectorAll('[data-fin]').forEach((chip) => {
-    chip.classList.toggle('is-on', chip.dataset.fin === name);
-    chip.setAttribute('aria-pressed', chip.dataset.fin === name ? 'true' : 'false');
-  });
-  if (state.check) renderFinance(resultParts(state.check).finance);
+  if (filterChips && state.check) filterChips.update(filterItems(resultParts(state.check).finance.checks || []), name);
+  syncChipAttrs();
+  if (state.check) renderFinanceTable(resultParts(state.check).finance);
 }
-function renderFinance(finance) {
-  const body = $('fin-body');
-  body.replaceChildren();
-  const visible = (finance.checks || []).filter((c) => {
-    if (state.finFilter === 'problem') return c.status === 'fail' || c.status === 'warn';
-    if (state.finFilter === 'skip') return c.status === 'skip';
-    return true;
-  });
-  $('fin-empty').hidden = visible.length > 0;
-  $('fin-empty').textContent = 'Bu süzgəcə uyğun yoxlama yoxdur.';
-  $('fin-table').hidden = visible.length === 0;
-  const all = finance.checks || [];
-  $('fin-c-hamisi').textContent = String(all.length);
-  $('fin-c-problem').textContent = String(all.filter((c) => c.status === 'fail' || c.status === 'warn').length);
-  $('fin-c-skip').textContent = String(all.filter((c) => c.status === 'skip').length);
-  const STAT_ICON = { ok: 'check', warn: 'alert', fail: 'x', skip: 'minus' };
-  visible.forEach((check) => {
-    const row = el('tr', 'frow frow--' + check.status);
-    const title = el('td', 'ftitle');
-    const mark = el('span', 'fstat fstat--' + check.status);
-    mark.setAttribute('aria-hidden', 'true');
-    mark.append(icon(STAT_ICON[check.status] || 'minus'));
-    const name = el('span', 'ftitle__text');
-    name.append(el('span', 'rowtitle', check.title));
-    if (check.critical) name.append(el('span', 'crit', 'Kritik'));
-    title.append(mark, name);
-    const cell = (label, value, cls) => { const td = el('td', 'num' + (cls ? ' ' + cls : ''), value); td.dataset.label = label; return td; };
-    const diff = el('td', 'num fdiffcell');
-    diff.dataset.label = 'Fərq';
-    diff.append(el('span', 'fdiff fdiff--' + check.status, formatValue(check.diff, check)));
-    const status = el('td');
-    status.append(badge('s-' + check.status, STATUS_LABELS[check.status] || check.status));
-    const go = el('td', 'fin__go');
-    const more = el('button', 'fin__more');
-    more.type = 'button';
-    more.append(el('span', null, 'Ətraflı'), icon('chevronRight'));
-    more.setAttribute('aria-label', check.title + ' — ətraflı: necə hesablandı və sənəddə harada yazılıb');
-    more.addEventListener('click', (e) => { e.stopPropagation(); openFinanceDetail(check, row); });
-    go.append(more);
-    row.append(title, cell('Planda', formatValue(check.claimed, check, writtenDecimals(finance, check))),
-      cell('Hesablama', formatValue(check.computed, check), 'fcalc'), diff, status, go);
-    row.addEventListener('click', () => openFinanceDetail(check, row));   // siçan üçün bütün sətir
-    body.append(row);
-  });
+function filterItems(all) {
+  return [
+    { id: 'hamisi', label: 'Hamısı', count: all.length },
+    { id: 'problem', label: 'Problemlilər', count: all.filter(isProblem).length, tone: all.some((c) => c.status === 'fail') ? 'danger' : 'warning' },
+    { id: 'skip', label: 'Yoxlanılmayanlar', count: all.filter((c) => c.status === 'skip').length },
+  ];
+}
+/** Köhnə seçicilər ([data-fin]) işləməyə davam edir — testlər və çap üçün. */
+function syncChipAttrs() {
+  document.querySelectorAll('#fin-filters .ui-chip').forEach((c) => { c.dataset.fin = c.dataset.id; });
+}
 
+function renderFinance(finance) {
+  const all = finance.checks || [];
+  openRows.clear();
+  renderLead(all);
+  renderKpis(finance);
+  filterChips = FilterChips({ label: 'Maliyyə süzgəci', items: filterItems(all), value: state.finFilter || 'hamisi', onChange: setFinanceFilter });
+  $('fin-filters').replaceChildren(filterChips);
+  syncChipAttrs();
+  renderFinanceTable(finance);
   const notFound = finance.not_found || [];
   const note = $('fin-notfound');
   note.hidden = notFound.length === 0;
   note.textContent = notFound.length ? 'Mənbəsi təsdiqlənmədiyi üçün istifadə edilməyən rəqəmlər: '
     + notFound.map((n) => n.label + ' (' + formatAz(n.value, 2) + ')' + (n.reason ? ' — ' + n.reason : '')).join('; ') + '.' : '';
 }
+
+/** Bir cümlə: neçəsi uyğundur + problemli yoxlamalar (ad və fərq), etiketə görə qruplaşdırılmış. */
+function renderLead(all) {
+  const lead = $('fin-lead');
+  if (!all.length) { lead.textContent = 'Maliyyə yoxlaması aparılmayıb: planda yenidən hesablanacaq cədvəl tapılmadı.'; return; }
+  const ok = all.filter((c) => c.status === 'ok').length;
+  const parts = [`${all.length} maliyyə yoxlamasından ${Report.poss(ok)} uyğundur.`];
+  const groups = {};
+  all.filter((c) => c.status !== 'ok').forEach((c) => {
+    const l = Report.financeLabel(c).label;
+    (groups[l] ||= []).push(lowerFirst(c.title) + (c.diff && c.status !== 'skip' ? ` (fərq ${fmtCheckValue(c.diff, c, undefined, true)})` : ''));
+  });
+  Object.entries(groups).forEach(([label, list]) => parts.push(`${label}: ${Report.joinAz(list)}.`));
+  lead.textContent = parts.join(' ');
+}
+
+const KPIS = [
+  ['investisiya_cemi', 'İnvestisiya'], ['npv', 'NPV — xalis cari dəyər'], ['irr', 'IRR — daxili rentabellik'], ['pp', 'PP — özünü ödəmə'],
+];
+function renderKpis(finance) {
+  const checks = finance.checks || [];
+  const tiles = KPIS.map(([id, label]) => {
+    const c = checks.find((x) => x.id === id);
+    if (!c || c.claimed == null) return null;
+    const d = writtenDecimals(finance, c);
+    const fmt = (v) => (c.unit === 'manat' ? fmtMoney(v, { compact: true }) : fmtCheckValue(v, c, d ?? c.decimals));
+    const fl = Report.financeLabel(c);
+    const sub = c.status === 'ok' ? 'Planda ↔ yenidən hesablanmış ✓' : `${fl.label}: yenidən hesablanmış ${fmtCheckValue(c.computed, c)}`;
+    return StatTile({ label, value: c.claimed, format: fmt, sub, tone: c.status === 'ok' ? undefined : fl.tone, onClick: () => openFinanceRow(c.id) });
+  }).filter(Boolean);
+  $('fin-kpis').replaceChildren(...tiles);
+  $('fin-kpis').hidden = tiles.length === 0;
+}
+
+const STAT_ICON = { ok: 'check', warn: 'alert', fail: 'alert', skip: 'minus' };
+function renderFinanceTable(finance) {
+  const host = $('fin-list');
+  const all = finance.checks || [];
+  const visible = all.filter((c) => (state.finFilter === 'problem' ? isProblem(c) : state.finFilter === 'skip' ? c.status === 'skip' : true));
+  if (!visible.length) {
+    host.replaceChildren(EmptyState({ icon: 'check', compact: true, title: all.length ? 'Bu süzgəcə uyğun yoxlama yoxdur' : 'Maliyyə yoxlaması aparılmayıb' }));
+    return;
+  }
+  const table = el2('table', { class: 'fintbl' },
+    el2('caption', { class: 'sr-only', text: 'Maliyyə yoxlamaları' }),
+    el2('colgroup', null, el2('col', { class: 'fintbl__c1' }), el2('col'), el2('col'), el2('col'), el2('col'), el2('col', { class: 'fintbl__c6' })),
+    el2('thead', null, el2('tr', null,
+      el2('th', { scope: 'col', text: 'Yoxlama' }), el2('th', { scope: 'col', class: 'num', text: 'Planda' }),
+      el2('th', { scope: 'col', class: 'num', text: 'Yenidən hesablanmış' }), el2('th', { scope: 'col', class: 'num', text: 'Fərq' }),
+      el2('th', { scope: 'col', text: 'Status' }), el2('th', { scope: 'col' }, el2('span', { class: 'sr-only', text: 'Ətraflı' })))));
+  const tbody = el2('tbody');
+  visible.forEach((c) => tbody.append(...financeRow(c, finance)));
+  table.append(tbody);
+  host.replaceChildren(table);
+}
+
+function financeRow(c, finance) {
+  const fl = Report.financeLabel(c);
+  const detId = 'fdet-' + c.id;
+  const open = openRows.has(c.id);
+  const btn = el2('button', { type: 'button', class: 'fintbl__more', 'aria-expanded': String(open), 'aria-controls': detId,
+    'aria-label': c.title + ' — necə hesablandı və mənbə' }, el2('span', { class: 'fintbl__moretext', text: 'Ətraflı' }), uiIcon('chevronDown', { size: 'sm' }));
+  const name = el2('th', { scope: 'row', class: 'fintbl__name' }, el2('div', { class: 'fintbl__namein' },
+    el2('span', { class: `fstat fstat--${c.status}`, 'aria-hidden': 'true' }, uiIcon(STAT_ICON[c.status] || 'minus', { size: 'sm' })),
+    el2('span', { class: 'fintbl__title' }, el2('span', { text: c.title }), c.critical ? el2('span', { class: 'finrow__crit', text: 'kritik' }) : null)));
+  const diffTone = c.status === 'fail' ? 'tone-negative' : c.status === 'warn' ? 'tone-warn' : null;
+  const cells = isFormula(c)
+    ? [el2('td', { class: 'fintbl__formula', colSpan: 3, dataset: { label: 'Nəticə' } },
+      uiIcon('check', { size: 'sm' }), el2('span', { text: 'Düstur düzgündür' }),
+      c.diff ? el2('span', { class: 'fintbl__hint', text: `(yuvarlaqlaşdırma fərqi ${fmtCheckValue(Math.abs(c.diff), c)})` }) : null)]
+    : [el2('td', { class: 'num', dataset: { label: 'Planda' }, text: fmtCheckValue(c.claimed, c, writtenDecimals(finance, c)) }),
+      el2('td', { class: 'num fintbl__calc', dataset: { label: 'Yenidən hesablanmış' }, text: fmtCheckValue(c.computed, c) }),
+      el2('td', { class: ['num', 'fintbl__diff', diffTone], dataset: { label: 'Fərq' }, text: c.diff == null ? '—' : fmtCheckValue(c.diff, c, undefined, true) })];
+  const row = el2('tr', { class: ['frow', `frow--${c.status}`, open && 'is-open'], dataset: { id: c.id }, id: 'frow-' + c.id },
+    name, ...cells, el2('td', { class: 'fintbl__status', dataset: { label: 'Status' } }, Badge(fl.label, { tone: fl.tone, size: 'sm' })), el2('td', { class: 'fintbl__go' }, btn));
+  const inner = el2('div', { class: 'fdet__inner' });
+  inner.inert = !open;
+  const det = el2('tr', { class: ['fdet', open && 'is-open'], id: detId }, el2('td', { colSpan: 6 }, el2('div', { class: 'fdet__panel' }, inner)));
+  if (open) inner.append(detailContent(c, finance));
+  const toggle = () => {
+    const now = !openRows.has(c.id);
+    if (now) openRows.add(c.id); else openRows.delete(c.id);
+    if (now && !inner.childNodes.length) inner.append(detailContent(c, finance));
+    row.classList.toggle('is-open', now);
+    det.classList.toggle('is-open', now);
+    inner.inert = !now;
+    btn.setAttribute('aria-expanded', String(now));
+  };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+  row.addEventListener('click', (e) => { if (!e.target.closest('button, a')) toggle(); });
+  row.toggle = toggle;
+  return [row, det];
+}
+
+/** Açılan sətir: necə hesablanıb (insan dilində) → rəqəmlər → mənbə sitatları → cədvəl → qayda (sonda, boz). */
+function detailContent(c, finance) {
+  const box = el2('div', { class: 'fdet__body' });
+  box.append(el2('section', { class: 'fdet__sec' }, el2('h4', { class: 'fdet__h', text: 'Necə hesablanıb' }), el2('p', { class: 'fdet__text', text: c.detail || '—' })));
+  if (c.claimed != null || c.computed != null) {
+    const written = writtenDecimals(finance, c);
+    box.append(el2('section', { class: 'fdet__sec' }, el2('h4', { class: 'fdet__h', text: 'Rəqəmlər' }),
+      KeyValue([['Planda göstərilən', fmtCheckValue(c.claimed, c, written)], ['Yenidən hesablanmış', fmtCheckValue(c.computed, c)],
+        ['Fərq', c.diff == null ? '—' : fmtCheckValue(c.diff, c, undefined, true)]], { dense: true })));
+  }
+  if ((c.unread_cells || []).length) {
+    box.append(el2('section', { class: 'fdet__sec' }, el2('h4', { class: 'fdet__h', text: 'Oxunmayan xanalar' }),
+      el2('p', { class: 'fdet__text', text: c.unread_cells.map((u) => u.year + ' — ' + u.rows.join(', ')).join('; ') })));
+  }
+  const ev = c.evidence || {};
+  const snippets = ev.snippets || [];
+  if (snippets.length) {
+    box.append(el2('section', { class: 'fdet__sec fdet__sec--wide' }, el2('h4', { class: 'fdet__h', text: 'Sənəddə harada yazılıb' }),
+      el2('div', { class: 'fdet__quotes' }, snippets.map((sn) => SourceQuote({
+        section: [FIELD_NAMES[sn.field] || sn.label, sn.section_title].filter(Boolean).join(' · '),
+        quote: excerpt(sn.text || '', sn.mark), location: sn.table_id ? `Cədvəl ${sn.table_id}` : 'Mətndə',
+        onOpen: sn.section_title ? () => openSection(sn) : null,
+      })))));
+  } else if (ev.snippets && !ev.cashflow) {
+    box.append(el2('p', { class: 'alert alert--warn', text: 'Bu rəqəm sənəddə tapılmadı — model tərəfindən verilən dəyər istifadə olunmayıb.' }));
+  }
+  if (ev.cashflow) box.append(el2('section', { class: 'fdet__sec fdet__sec--wide' }, el2('h4', { class: 'fdet__h', text: 'Cədvəldən (sənəddə yazıldığı kimi)' }), cashflowTable(ev.cashflow)));
+  if (c.rule) box.append(el2('p', { class: 'fdet__rule' }, el2('span', { class: 'fdet__rulelabel', text: 'Qayda: ' }), c.rule));
+  return box;
+}
+/** Sitat: vurğulanan yerin ətrafı (±110 simvol), söz sərhədində kəsilir. */
+function excerpt(text, mark) {
+  if (!mark || mark[0] < 0 || mark[1] > text.length) return text.length > 320 ? text.slice(0, 300).replace(/\s\S*$/, '') + '…' : text;
+  let a = Math.max(0, mark[0] - 110);
+  let b = Math.min(text.length, mark[1] + 110);
+  if (a > 0) a = text.indexOf(' ', a) + 1 || a;
+  if (b < text.length) { const sp = text.lastIndexOf(' ', b); if (sp > mark[1]) b = sp; }
+  return (a > 0 ? '…' : '') + text.slice(a, b) + (b < text.length ? '…' : '');
+}
+/** Bölmənin tam mətni drawer-də, sitat vurğulanmış və görünüşə sürüşdürülmüş (Faza 5-də sənəd görüntüsünə çevrilir). */
+async function openSection(sn) {
+  const body = el2('div', { class: 'docview' }, el2('p', { class: 'docview__loading', text: 'Bölmə yüklənir…' }));
+  openDrawer({ title: sn.section_title, content: body });
+  try {
+    const data = await api.get('/api/checks/' + encodeURIComponent(state.check.id) + '/section?title=' + encodeURIComponent(sn.section_title));
+    const marked = sn.mark ? sn.text.slice(sn.mark[0], sn.mark[1]) : null;
+    const at = marked ? data.text.indexOf(marked) : -1;
+    const q = markedText(data.text, at >= 0 ? [at, at + marked.length] : null);
+    q.classList.add('docview__text');
+    body.replaceChildren(q);
+    const hit = q.querySelector('mark');
+    if (hit) requestAnimationFrame(() => hit.scrollIntoView({ block: 'center' }));
+  } catch (err) {
+    body.replaceChildren(el2('p', { class: 'alert alert--warn', text: err.message || 'Bölmə yüklənmədi.' }));
+  }
+}
+
+/** Kənardan (KPI, Nəticə tabı): Maliyyə tabı, süzgəc sıfırlanır, sətir açılır və vurğulanır. */
+function openFinanceRow(id) {
+  selectTab('panel-maliyye', false);
+  if (state.finFilter !== 'hamisi') setFinanceFilter('hamisi');
+  const row = $('frow-' + id);
+  if (!row) return;
+  if (!openRows.has(id)) row.toggle();
+  row.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+  row.querySelector('.fintbl__more')?.focus({ preventScroll: true });
+  row.classList.remove('is-flash');
+  void row.offsetWidth;
+  row.classList.add('is-flash');
+}
+
+/* ── Qrafiklər ──────────────────────────────────────────────────────────── */
 function renderCharts(finance) {
-  const host = $('charts');
-  host.replaceChildren();
   const charts = finance.charts || {};
-  const width = window.innerWidth < 600 ? 360 : 640;    // dar ekranda yazılar sıxılmasın
-  host.append(
-    Charts.chartCard('bar', 'Sərbəst pul axını (FCFF) illər üzrə', charts.fcff, width),
-    Charts.chartCard('line', 'Kumulyativ pul axını', charts.cumulative, width),
-    Charts.chartCard('split', 'Maliyyələşmə mənbələrinin bölgüsü', charts.funding, width),
-    Charts.chartCard('split', 'İnvestisiya: əsas və dövriyyə vəsaitləri', charts.investment, width),
-  );
+  const cfHost = $('fin-cashflow');
+  const fcff = charts.fcff;
+  const cum = charts.cumulative;
+  if (fcff && fcff.available && cum && cum.available) {
+    const rows = ((finance.cashflow || {}).rows) || {};
+    const resRow = rows.residual && rows.residual.ok !== false ? rows.residual : null;
+    const residual = resRow ? fcff.years.map((yr) => { const k = resRow.years.indexOf(yr); return k >= 0 ? resRow.values[k] || 0 : 0; }) : null;
+    const pp = (finance.checks || []).find((c) => c.id === 'pp');
+    const chart = cashflowChart({
+      years: fcff.years, fcff: fcff.values, cumulative: cum.values, residual,
+      ratePct: (finance.claimed || {}).discount_rate_pct ?? null, payback: pp && pp.computed != null ? pp.computed : null,
+    });
+    cfHost.replaceChildren(el2('div', { class: 'finv__card' },
+      el2('p', { class: 'finv__meta', text: `Vahid: ₼ · İllər: ${fcff.years[0]}–${fcff.years[fcff.years.length - 1]} · Mənbə: cədvəl ${fcff.source || '—'}` }),
+      chart.node,
+      Disclosure({ summary: 'Cədvəl kimi göstər', content: DataTable({ ...chart.table, dense: true }) })));
+  } else {
+    cfHost.replaceChildren(EmptyState({ icon: 'info', compact: true, title: 'Pul axını qrafiki qurulmadı', text: 'Planda illər üzrə FCFF cədvəli tapılmadı.' }));
+  }
+
+  const cards = [];
+  const funding = charts.funding;
+  const inv = charts.investment;
+  if (funding && funding.available) {
+    const srcCheck = (finance.checks || []).find((c) => c.id === 'menbeler_cemi');
+    const investment = (finance.claimed || {}).investment_total;
+    const parts = funding.parts.map((p) => ({ label: p.label, value: p.value }));
+    cards.push(el2('div', { class: 'finv__card' }, el2('h3', { class: 'finv__h3', text: 'Maliyyələşmə mənbələri' }),
+      donut({ parts, total: funding.total, centerLabel: 'Mənbələr' }),
+      investment != null ? gapBars({ investment, sources: funding.total, diff: srcCheck ? srcCheck.diff : null }) : null,
+      Disclosure({ summary: 'Cədvəl kimi göstər', content: partsTable(parts, funding.total) })));
+  }
+  if (inv && inv.available) {
+    const parts = inv.parts.map((p) => ({ label: p.label, value: p.value }));
+    cards.push(el2('div', { class: 'finv__card' }, el2('h3', { class: 'finv__h3', text: 'İnvestisiyanın strukturu' }),
+      donut({ parts, total: inv.total, centerLabel: 'İnvestisiya' }),
+      Disclosure({ summary: 'Cədvəl kimi göstər', content: partsTable(parts, inv.total) })));
+  }
+  $('fin-funding').replaceChildren(...cards);
+  $('fin-funding-sec').hidden = cards.length === 0;
+}
+function partsTable(parts, total) {
+  return DataTable({ dense: true, caption: 'Hissələr', rows: [...parts.map((p, i) => ({ id: i, ...p })), { id: 'cemi', label: 'Cəmi', value: total }],
+    columns: [{ key: 'label', label: 'Hissə' }, { key: 'value', label: 'Məbləğ', type: 'number', render: (r) => fmtMoney(r.value) },
+      { key: 'share', label: 'Pay', type: 'number', render: (r) => fmtPct(r.value / (total || 1)) }] });
 }
 function openFinanceDetail(check, row) {
   openDetail(check.title, (body) => {
@@ -222,4 +420,4 @@ function miniTable(text) {
   return wrap;
 }
 
-export { openFinanceDetail, previewCard, renderCharts, renderFinance, setFinanceFilter, snippetCard };
+export { openFinanceDetail, openFinanceRow, previewCard, renderCharts, renderFinance, setFinanceFilter, snippetCard };

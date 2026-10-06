@@ -205,3 +205,10 @@ test('joinAz', () => {
   assert.equal(R.joinAz(['a', 'b', 'c']), 'a, b və c');
   assert.equal(R.joinAz(['a və b', 'c']), 'a və b; c');
 });
+
+test('financeLabel: dəqiqləşdirmə hər statusdan üstündür, "Xəbərdarlıq" yoxdur', () => {
+  assert.deepEqual(R.financeLabel({ status: 'warn', clarify: true }), { label: 'Dəqiqləşdirmə', tone: 'warning' });
+  assert.deepEqual(R.financeLabel({ status: 'ok' }), { label: 'Uyğun', tone: 'success' });
+  assert.deepEqual(R.financeLabel({ status: 'fail' }), { label: 'Uyğunsuz', tone: 'danger' });
+  for (const s of ['ok', 'warn', 'fail', 'skip']) assert.notEqual(R.financeLabel({ status: s }).label, 'Xəbərdarlıq');
+});

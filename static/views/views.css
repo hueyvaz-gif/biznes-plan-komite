@@ -117,3 +117,207 @@
   .fixlist__more { grid-template-rows: 1fr; }
   .fixc { break-inside: avoid; box-shadow: none; }
 }
+
+/* ══ Maliyyə tabı (Faza 4) ════════════════════════════════════════════════ */
+.finv__lead { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-6); }
+.finv__kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--sp-3); margin-top: var(--sp-2); }
+.finv__kpis .ui-tile__num { font-size: var(--fs-2xl); }
+.finv__sec { margin-top: var(--sp-10); }
+.finv__sec .sumv__sub { margin-bottom: var(--sp-4); }
+.finv__card { display: grid; gap: var(--sp-4); padding: var(--sp-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--e-1); min-width: 0; }
+.finv__meta { margin: 0; color: var(--ink-faint); font-size: var(--fs-xs); }
+.finv__h3 { margin: 0; font-size: var(--fs-lg); line-height: var(--lh-lg); }
+.finv__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: var(--sp-4); }
+#fin-filters { padding: var(--sp-1) 0; }
+
+/* Yoxlamalar cədvəli: ilk sütun geniş (chip adla eyni sətirdə), başlıq sticky stack-in altında. */
+.fintbl { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); font-size: var(--fs-md); }
+.fintbl__c1 { width: 34%; }
+.fintbl__c6 { width: 1%; }
+.fintbl thead th {
+  position: sticky; top: var(--sticky-stack-h, 0px); z-index: var(--z-raised); padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft);
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; text-align: left; white-space: nowrap;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.fintbl thead th:first-child { border-top-left-radius: var(--r-lg); }
+.fintbl thead th:last-child { border-top-right-radius: var(--r-lg); }
+.fintbl thead th.num { text-align: right; }
+#view-results.is-compact .fintbl thead th { transform: translateY(calc(var(--herobar-h) - var(--tabs-compact-delta))); }
+.fintbl tbody th, .fintbl tbody td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line); vertical-align: middle; text-align: left; }
+.fintbl td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fintbl__name { min-width: 220px; font-weight: 500; }
+.fintbl__namein { display: flex; align-items: center; gap: var(--sp-2); }
+.fintbl__title { min-width: 0; }
+.fintbl__title .finrow__crit { display: inline-block; margin-left: var(--sp-2); vertical-align: 1px; }
+.fintbl__title .finrow__crit { white-space: nowrap; }
+.fintbl .fstat { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: var(--r-pill);
+                 background: var(--neutral-bg); color: var(--neutral-fg); }
+.fintbl .fstat--ok { background: var(--success-bg); color: var(--success-fg); }
+.fintbl .fstat--warn { background: var(--warning-bg); color: var(--warning-fg); }
+.fintbl .fstat--fail { background: var(--danger-bg); color: var(--danger-fg); }
+.fintbl__calc { font-weight: 600; }
+.fintbl__diff { color: var(--ink-soft); }
+.tone-warn { color: var(--warning-fg); font-weight: 600; }
+.fintbl__formula { color: var(--success-fg); font-weight: 600; }
+.fintbl__formula > * { vertical-align: middle; }
+.fintbl__formula .icon { margin-right: var(--sp-1); }
+.fintbl__hint { margin-left: var(--sp-2); color: var(--ink-faint); font-weight: 400; font-size: var(--fs-sm); }
+.fintbl__go { text-align: right; white-space: nowrap; }
+.fintbl__more {
+  display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 32px; padding: 0 var(--sp-2) 0 var(--sp-3);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: inherit; font-size: var(--fs-sm); cursor: pointer;
+}
+.fintbl__more:hover { border-color: var(--accent); color: var(--accent); }
+.fintbl__more .icon { transition: transform var(--dur-2) var(--ease-out); }
+.fintbl__more[aria-expanded="true"] .icon { transform: rotate(180deg); }
+.frow { cursor: pointer; transition: background-color var(--dur-1) var(--ease-out); }
+.frow:hover > *, .frow.is-open > * { background: var(--surface-2); }
+.frow--warn > th:first-child { box-shadow: inset 3px 0 0 var(--warning-solid); }
+.frow--fail > th:first-child { box-shadow: inset 3px 0 0 var(--danger-fg); }
+.frow.is-open > * { border-bottom-color: transparent; }
+.fintbl .fdet > td { padding: 0; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.fintbl .fdet:not(.is-open) > td { border-bottom: 0; }
+.fintbl tbody tr:last-child > * { border-bottom: 0; }
+.fdet__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 240ms var(--ease-out); }
+.fdet.is-open .fdet__panel { grid-template-rows: 1fr; }
+.fdet__inner { min-height: 0; overflow: hidden; }
+.fdet__body { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4) var(--sp-6); padding: var(--sp-2) var(--sp-5) var(--sp-5) calc(var(--sp-5) + 32px); }
+.fdet__sec { min-width: 0; }
+.fdet__sec--wide, .fdet__rule { grid-column: 1 / -1; }
+.fdet__h { margin: 0 0 var(--sp-1); color: var(--ink-faint); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.fdet__text { margin: 0; font-size: var(--fs-md); line-height: var(--lh-md); }
+.fdet__quotes { display: grid; gap: var(--sp-3); }
+.fdet__rule { margin: 0; padding-top: var(--sp-3); border-top: 1px dashed var(--line); color: var(--ink-faint); font: var(--fs-xs)/var(--lh-xs) var(--mono); }
+.fdet__rulelabel { font-family: var(--sans); font-weight: 600; }
+@media (max-width: 767px) {
+  .fintbl, .fintbl tbody, .fintbl tr, .fintbl tbody th, .fintbl td { display: block; }
+  .fintbl { border: 0; background: none; }
+  .fintbl thead, .fintbl colgroup { display: none; }
+  .frow { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-4);
+          border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+  .frow.is-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .fintbl tbody .frow > th, .fintbl tbody .frow > td { padding: var(--sp-1) 0; border: 0; background: none; text-align: left; }
+  .frow > .fintbl__name { grid-column: 1 / -1; min-width: 0; padding-right: 44px; }
+  .frow > td.num::before, .frow > .fintbl__status::before, .frow > .fintbl__formula::before {
+    content: attr(data-label); display: block; color: var(--ink-faint); font-size: var(--fs-xs); font-weight: 400; }
+  .frow > td.num { text-align: left; }
+  .frow > .fintbl__formula { grid-column: 1 / -1; }
+  .frow > .fintbl__go { position: absolute; top: var(--sp-2); right: var(--sp-2); }
+  .fintbl__moretext { display: none; }
+  .fintbl__more { min-width: 44px; min-height: 44px; justify-content: center; padding: 0; }
+  .fintbl .fdet > td { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r-lg) var(--r-lg); }
+  .fintbl .fdet:not(.is-open) > td { border: 0; }
+  .fdet__body { padding: var(--sp-3) var(--sp-4) var(--sp-4); grid-template-columns: minmax(0, 1fr); }
+  .finv__card { padding: var(--sp-4); }
+}
+
+/* ── Pul axını qrafiki ──────────────────────────────────────────────────── */
+.cfc { position: relative; }
+.cfc__fig { margin: 0; border-radius: var(--r-md); }
+.cfc__fig:focus-visible { box-shadow: var(--focus); }
+.cfc__svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--sans); }
+.cfc__gl { stroke: var(--line); stroke-dasharray: 2 4; }
+.cfc__zero { stroke: var(--line-strong); stroke-width: 1.5; }
+.cfc__yl, .cfc__xl { fill: var(--ink-faint); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.cfc__pos { fill: var(--chart-1); }
+.cfc__neg { fill: var(--chart-neg); }
+.cfc__res { stroke: var(--chart-1); stroke-width: 1; }
+.cfc__hatchbg { fill: var(--surface); }
+.cfc__hatch { stroke: var(--chart-1); stroke-width: 2.5; }
+.cfc__line { fill: none; stroke: var(--warning-solid); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.cfc__dot { fill: var(--surface); stroke: var(--warning-solid); stroke-width: 2; }
+.cfc__dot--neg { stroke: var(--chart-neg); }
+.cfc__ppline { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.cfc__ppdot { fill: var(--accent); stroke: var(--surface); stroke-width: 2.5; }
+.cfc__pplabel { fill: var(--accent); }
+.cfc__pptext { fill: var(--on-accent); font-size: var(--fs-xs); font-weight: 600; }
+.cfc__cross { fill: var(--accent-soft); opacity: .7; pointer-events: none; }
+.cfc__hit { fill: transparent; cursor: crosshair; }
+.cfc__bars, .cfc__dots { pointer-events: none; }
+/* Giriş: sütunlar sıfır xəttindən 40ms ardıcıllıqla, xətt 800ms-də çəkilir (ilk görünəndə). */
+.cfc.is-animating .cfc__bar { animation: cfBar 420ms var(--ease-out) both; animation-delay: calc(var(--i) * 40ms); }
+.cfc.is-animating .cfc__line { stroke-dasharray: 1; animation: cfDraw 800ms var(--ease-out) 200ms both; }
+.cfc.is-animating .cfc__dots, .cfc.is-animating .cfc__pp { animation: fade var(--dur-2) var(--ease-out) 900ms both; }
+.cfc:not(.is-in) .cfc__bar, .cfc:not(.is-in) .cfc__line, .cfc:not(.is-in) .cfc__dots, .cfc:not(.is-in) .cfc__pp { opacity: 0; }
+@keyframes cfBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes cfDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.cfc__tip {
+  position: absolute; top: var(--sp-8); z-index: var(--z-tooltip); min-width: 220px; padding: var(--sp-2) var(--sp-3);
+  transform: translateX(12px); border-radius: var(--r-md); background: var(--inverse-bg); color: var(--inverse-fg); box-shadow: var(--e-3);
+  font-size: var(--fs-sm); pointer-events: none;
+}
+.cfc__tip.is-left { transform: translateX(calc(-100% - 12px)); }
+.cfc__tip dl { display: grid; grid-template-columns: auto auto; gap: 2px var(--sp-4); margin: var(--sp-1) 0 0; }
+.cfc__tip dt { color: color-mix(in srgb, var(--inverse-fg) 70%, transparent); }
+.cfc__tip dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.cfc__tip .tone-negative { color: var(--danger-border); }
+.cfc__tip .tone-positive { color: var(--success-border); }
+.cfc__legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); margin: var(--sp-3) 0 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: var(--fs-sm); }
+.cfc__legend li { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.cfc__key { display: inline-block; width: 14px; height: 10px; border-radius: var(--r-sm); }
+.cfc__key--bar { background: var(--chart-1); }
+.cfc__key--neg { background: var(--chart-neg); }
+.cfc__key--res { background: repeating-linear-gradient(45deg, var(--chart-1) 0 2px, var(--surface) 2px 5px); outline: 1px solid var(--chart-1); outline-offset: -1px; }
+.cfc__key--line { height: 3px; border-radius: var(--r-pill); background: var(--warning-solid); }
+.cfc__key--pp { width: 10px; height: 10px; border-radius: var(--r-pill); background: var(--accent); }
+
+/* ── Donut və investisiya ↔ mənbələr ────────────────────────────────────── */
+.cfd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-5); }
+.cfd__ring { position: relative; flex: none; width: 168px; height: 168px; }
+.cfd__svg { display: block; }
+.cfd__track { fill: none; stroke: var(--surface-3); }
+.cfd__seg { fill: none; }
+.cfd:not(.is-in) .cfd__seg { opacity: 0; }
+.cfd.is-in .cfd__seg { animation: fade var(--dur-3) var(--ease-out) both; animation-delay: calc(var(--i) * 120ms); }
+.cfd--1 { stroke: var(--chart-1); background: var(--chart-1); }
+.cfd--2 { stroke: var(--chart-2); background: var(--chart-2); }
+.cfd--3 { stroke: var(--chart-3); background: var(--chart-3); }
+.cfd--4 { stroke: var(--chart-4); background: var(--chart-4); }
+.cfd--5 { stroke: var(--warning-solid); background: var(--warning-solid); }
+.cfd__center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.cfd__clabel { color: var(--ink-faint); font-size: var(--fs-xs); }
+.cfd__cvalue { font-size: var(--fs-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cfd__legend { flex: 1 1 220px; display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; font-size: var(--fs-sm); }
+.cfd__legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; align-items: center; gap: var(--sp-2); }
+.cfd__key { width: 12px; height: 12px; border-radius: var(--r-sm); }
+.cfd__val { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.cfd__share { min-width: 48px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.cfg { display: grid; gap: var(--sp-2); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
+.cfg__row { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; align-items: center; gap: var(--sp-3); font-size: var(--fs-sm); }
+.cfg__label { color: var(--ink-soft); }
+.cfg__track { display: flex; height: 14px; border-radius: var(--r-sm); background: var(--surface-2); overflow: hidden; }
+.cfg__seg { height: 100%; transform-origin: left; }
+.cfg.is-in .cfg__seg { animation: barIn var(--dur-4) var(--ease-out) both; }
+.cfg__seg--inv { background: var(--chart-1); }
+.cfg__seg--src { background: var(--chart-2); }
+.cfg__seg--over { background: repeating-linear-gradient(45deg, var(--warning-solid) 0 3px, var(--warning-bg) 3px 6px); }
+.cfg__val { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cfg__note { margin: var(--sp-1) 0 0; color: var(--ink-soft); font-size: var(--fs-sm); }
+.cfg--over .cfg__note strong { color: var(--warning-fg); }
+.cfg--under .cfg__note strong { color: var(--danger-fg); }
+@media (max-width: 480px) { .cfg__row { grid-template-columns: minmax(0, 1fr) auto; } .cfg__track { grid-column: 1 / -1; grid-row: 2; } }
+
+/* ── Bölmə drawer-i (Faza 5-də sənəd görüntüsü olur) ───────────────────── */
+.docview__text { margin: 0; white-space: pre-wrap; font-style: normal; font-size: var(--fs-md); line-height: var(--lh-md); }
+.docview__text mark, .docview mark { padding: 0 2px; border-radius: var(--r-sm); background: var(--highlight); color: var(--ink); }
+.docview__loading { color: var(--ink-faint); }
+@media print {
+  .fdet__panel { grid-template-rows: 1fr; }
+  .fintbl thead th { position: static; transform: none; }
+  .cfc__tip, .fintbl__go { display: none; }
+}
+
+/* Dar konteyner (rail, 974px və s.): "Ətraflı" yalnız ikon, padding sıx, başlıqlar sətrə bölünə bilər — cədvəl kartdan çıxmır. */
+#fin-list { container-type: inline-size; }
+@container (max-width: 940px) {
+  .fintbl tbody th, .fintbl tbody td { padding: var(--sp-3) var(--sp-2); }
+  .fintbl thead th { padding: var(--sp-2); white-space: normal; }
+  .fintbl__name { min-width: 200px; }
+  .fintbl__moretext { display: none; }
+  .fintbl__more { min-width: 36px; justify-content: center; padding: 0; }
+}
+
+/* Çap və animasiyasız mühit: ilk görünmə gözləyən qrafiklər həmişə görünür. */
+@media print { .cfc .cfc__bar, .cfc .cfc__line, .cfc .cfc__dots, .cfc .cfc__pp, .cfd .cfd__seg { opacity: 1; animation: none; } }

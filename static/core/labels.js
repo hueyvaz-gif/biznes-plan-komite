@@ -1,6 +1,7 @@
 /* Status etiketləri və ton xəritələri. */
 
-const STATUS_LABELS = { ok: 'Uyğun', warn: 'Xəbərdarlıq', fail: 'Uyğunsuzluq', skip: 'Yoxlanılmadı' };
+/** Maliyyə yoxlamasının statusu — Report.FIN_LABEL ilə eyni (bütün tablarda eyni termin; "Xəbərdarlıq" işlənmir). */
+const STATUS_LABELS = { ok: 'Uyğun', warn: 'Kiçik fərq', fail: 'Uyğunsuz', skip: 'Yoxlanılmadı' };
 const STEP_STATE = { gozleyir: 'Gözləyir', isleyir: 'İşləyir', tamamlandi: 'Tamamlandı', xeta: 'Xəta' };
 /* Tələbin statusu: etiket + rəng sinfi (sinif həm də işarə qoyur). */
 const REQ_STATUS = {

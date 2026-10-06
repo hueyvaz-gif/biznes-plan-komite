@@ -576,30 +576,28 @@
         <!-- Maliyyə -->
         <div class="panel" id="panel-maliyye" role="tabpanel" aria-labelledby="tab-maliyye" tabindex="0" hidden>
           <h2 class="print-only print-title">Maliyyə yoxlamaları</h2>
-          <div class="toolbar stickyrow">
-            <div class="chips" role="group" aria-label="Maliyyə süzgəci">
-              <button class="chip is-on" type="button" data-fin="hamisi" aria-pressed="true">Hamısı <span class="chip__count" id="fin-c-hamisi"></span></button>
-              <button class="chip" type="button" data-fin="problem" aria-pressed="false">Problemlilər <span class="chip__count" id="fin-c-problem"></span></button>
-              <button class="chip" type="button" data-fin="skip" aria-pressed="false">Yoxlanılmayanlar <span class="chip__count" id="fin-c-skip"></span></button>
-            </div>
-          </div>
-          <p class="empty" id="fin-empty" hidden></p>
-          <div class="tablewrap">
-            <table class="table table--rows" id="fin-table">
-              <caption class="sr-only">Maliyyə yoxlamaları</caption>
-              <thead><tr>
-                <th scope="col">Yoxlama</th><th scope="col" class="num">Planda</th>
-                <th scope="col" class="num">Hesablama</th><th scope="col" class="num">Fərq</th>
-                <th scope="col">Status</th><th scope="col" class="fin__go"><span class="sr-only">Ətraflı</span></th>
-              </tr></thead>
-              <tbody id="fin-body"></tbody>
-            </table>
-          </div>
+          <section class="finv__lead" aria-labelledby="fin-title">
+            <h2 class="sumv__eyebrow" id="fin-title">Maliyyə yoxlaması</h2>
+            <p class="sumv__sentence" id="fin-lead"></p>
+            <p class="sumv__sub">“Uyğun” — plandakı rəqəm planın öz cədvəllərindən yenidən hesablanmış rəqəmlə üst-üstə düşür. Bu, layihənin sərfəli olduğunu göstərmir.</p>
+            <div class="finv__kpis" id="fin-kpis" aria-label="Maliyyə göstəriciləri"></div>
+          </section>
+          <div class="toolbar stickyrow"><div id="fin-filters"></div></div>
+          <div id="fin-list"></div>
           <p class="alert alert--warn" id="fin-notfound" hidden></p>
-          <h2 class="panel__title panel__title--spaced charts-head">Planın rəqəmləri qrafiklərdə</h2>
-          <p class="panel__lead charts-head">Bütün dəyərlər planın öz cədvəllərindən götürülüb, toplamalar
-            ayrıca yenidən aparılıb. Məlumat çatmayanda qrafik qurulmur.</p>
-          <div class="charts" id="charts"></div>
+
+          <section class="finv__sec" aria-labelledby="fin-cf-title">
+            <h2 class="sumv__h" id="fin-cf-title">Pul axını</h2>
+            <p class="sumv__sub">İllik sərbəst pul axını (FCFF) və onun kumulyativ cəmi. Son ilin sütununda qalıq dəyər ayrıca (ştrixli) göstərilir.
+              Üzərinə gətirin və ya qrafiki seçib ← → düymələri ilə illərə baxın.</p>
+            <div id="fin-cashflow"></div>
+          </section>
+
+          <section class="finv__sec" id="fin-funding-sec" aria-labelledby="fin-fund-title">
+            <h2 class="sumv__h" id="fin-fund-title">Maliyyələşmə</h2>
+            <p class="sumv__sub">Bütün dəyərlər planın öz cədvəllərindən götürülüb, cəmlər ayrıca yenidən hesablanıb.</p>
+            <div class="finv__grid" id="fin-funding"></div>
+          </section>
         </div>
 
         <!-- Standart tələblər -->
@@ -879,7 +877,6 @@
 
 <script src="/static/poll.js"></script>
 <script src="/static/upload.js"></script>
-<script src="/static/charts.js"></script>
 <script src="/static/agents.js"></script>
 <script src="/static/market.js"></script>
 <script src="/static/chat.js"></script>

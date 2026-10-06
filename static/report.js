@@ -500,6 +500,13 @@
 
   /* ── Maliyyə: yığcam cədvəl ────────────────────────────────────────── */
 
+  /** Maliyyə yoxlamasının etiketi və tonu — Nəticə və Maliyyə tablarında EYNİ qayda. */
+  function financeLabel(c) {
+    if (!c) return { label: '—', tone: 'neutral' };
+    if (c.clarify) return { label: 'Dəqiqləşdirmə', tone: 'warning' };
+    return { label: FIN_LABEL[c.status] || c.status, tone: { ok: 'success', warn: 'warning', fail: 'danger', skip: 'neutral' }[c.status] || 'neutral' };
+  }
+
   function financeRows(result) {
     return ((((result && result.finance) || {}).checks) || []).map((c) => ({
       id: c.id, title: c.title, claimed: c.claimed, computed: c.computed, status: c.status,
@@ -544,7 +551,7 @@
   const api = {
     REQ_LABEL, FIN_LABEL, SEVERITY_LABEL, reqCounts, resolveCarried, firstSentence, placeholderText,
     cleanMissing, asShortfall, actionFor, locationLabel, buildReport, buildOverview, financeCounts, financeRows, poss, loc,
-    buildSentence, joinAz,
+    buildSentence, joinAz, financeLabel,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Report = api;
