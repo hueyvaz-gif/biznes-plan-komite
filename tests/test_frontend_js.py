@@ -18,8 +18,8 @@ def test_js_modulları():
     node = shutil.which("node")
     if node is None:
         pytest.skip("Node.js tapılmadı — frontend testləri işə salınmadı.")
-    files = sorted(str(p) for p in JS_DIR.glob("*.test.js"))
+    files = sorted(str(p) for p in [*JS_DIR.glob("*.test.js"), *JS_DIR.glob("*.test.mjs")])
     assert files, "tests/js-də test faylı yoxdur"
-    result = subprocess.run([node, "--test", *files], capture_output=True, text=True,
+    result = subprocess.run([node, "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--test", *files], capture_output=True, text=True,
                             encoding="utf-8", timeout=120)
     assert result.returncode == 0, result.stdout[-4000:] + result.stderr[-2000:]
