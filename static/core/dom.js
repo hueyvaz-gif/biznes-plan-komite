@@ -120,6 +120,7 @@ function statusDot(item) {
   const st = statusOf(item);
   const dot = el('span', 'sdot sdot--' + st.tone);
   dot.setAttribute('aria-hidden', 'true');
+  dot.title = st.label;                  // rəngin mənası (məs. "Düzəliş lazımdır") — görən istifadəçi üçün
   return [dot, el('span', 'sr-only', st.label)];
 }
 function formatAz(value, decimals) {

@@ -35,6 +35,10 @@ function applyMeta() {
       ? '(' + facts.in_plan + '-i planın mətnində yoxlanılır, ' + facts.document_only + '-i ayrıca sənəd)' : '';
     countUp($('fact-groups'), facts.groups);
     countUp($('fact-fin'), facts.finance_checks);
+    if (facts.economics_checks) {
+      countUp($('fact-econ'), facts.economics_checks);
+      $('fact-econ-sub').textContent = facts.scenarios ? '(+' + facts.scenarios + ' həssaslıq ssenarisi)' : '';
+    } else $('fact-econ').closest('.fact').hidden = true;
   }
   if (meta.max_upload_mb) $('max-mb').textContent = String(meta.max_upload_mb);
   const select = $('fail-at');
@@ -62,6 +66,7 @@ async function init() {
   $('plan-id').addEventListener('input', () => { updateFormState(); suggestExistingPlan(); });
   document.querySelectorAll('input[name="plan-mode"]').forEach((r) => r.addEventListener('change', () => setPlanMode(r.value)));
   $('plan-select').addEventListener('change', updateFormState);
+  updateFormState();                       // "Davam et" niyə hələ aktiv deyil — səbəb ilk açılışda görünür
   $('extra-toggle').addEventListener('click', () => setExtrasOpen($('extra-toggle').getAttribute('aria-expanded') !== 'true'));
   $('nav-history').addEventListener('click', () => {
     // Rail rejimində (861–1080px) siyahı görünmür — panel tam enində açılır.

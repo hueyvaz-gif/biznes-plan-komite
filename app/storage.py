@@ -446,6 +446,26 @@ def events_list(check_id: str, after: int = 0, limit: int = 2000) -> list[dict[s
     return [dict(row) for row in rows]
 
 
+def typical_run_seconds(limit: int = 10) -> float | None:
+    """Son `limit` tamamlanmış yoxlamanın icra müddətinin medianı (saniyə) — hər yoxlamanın SON cəhdi,
+    ilk hadisədən sonuncuya qədər. Məlumat yoxdursa None (vaxt uydurulmur)."""
+    with _connect() as connection:
+        connection.executescript(SCHEMA)
+        rows = connection.execute(
+            """SELECT e.check_id, MAX(e.ts) - MIN(e.ts) AS seconds
+                 FROM events e JOIN checks c ON c.id = e.check_id
+                WHERE c.run_state = 'tamamlandi' AND c.verdict IS NOT NULL AND c.verdict != 'giris_xetasi'
+                  AND e.attempt = (SELECT MAX(attempt) FROM events WHERE check_id = e.check_id)
+                GROUP BY e.check_id
+                ORDER BY MAX(c.created_at) DESC
+                LIMIT ?""", (limit,)).fetchall()
+    values = sorted(float(r["seconds"]) for r in rows if r["seconds"] and r["seconds"] > 5)
+    if not values:
+        return None
+    mid = len(values) // 2
+    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
+
+
 def next_attempt(check_id: str) -> int:
     """Növbəti icra cəhdinin nömrəsi (1, 2, ...). Köhnə cəhdlərin hadisələri qalır."""
     with _connect() as connection:

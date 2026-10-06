@@ -16,7 +16,7 @@ const widths = (args.widths || '1440,1280,974,768,375').split(',').map(Number);
 const theme = args.theme || 'light';
 const TABS = ['xulase', 'maliyye', 'iqtisadi', 'teleb', 'elave', 'bosyer', 'suallar', 'muqayise', 'agentler'];
 const pages = args.pages
-  ? args.pages.split(',').map((p) => [p, p === 'kitchen-sink' ? '?ui=kitchen-sink' : `?check=${check}&tab=${p}`])
+  ? args.pages.split(',').map((p) => [p, p === 'kitchen-sink' ? '?ui=kitchen-sink' : p === 'landing' ? '' : `?check=${check}&tab=${p}`])
   : [['landing', ''], ...TABS.map((t) => [t, `?check=${check}&tab=${t}`])];
 
 const browser = await chromium.launch();

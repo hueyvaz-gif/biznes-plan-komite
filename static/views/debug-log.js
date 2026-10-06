@@ -29,28 +29,6 @@ function eventBadge(e) {
   if (e.status === 'alət xətası') return badge('s-warn', 'alət xətası');
   return badge('s-fail', 'xəta');
 }
-/** İcra ekranı: son alət çağırışları və agent nəticələri (yeni olan aşağıda). */
-function renderFeed() {
-  const list = $('feed');
-  const shown = AG.list.filter((e) => e.kind === 'tool' || e.kind === 'result'
-    || (e.kind === 'node' && e.status !== 'ok')).slice(-40);
-  $('feed-empty').hidden = shown.length > 0;
-  if (!shown.length) { list.replaceChildren(); return; }
-  const start = Math.min(...AG.list.map((e) => e.ts));
-  list.replaceChildren(...shown.map((e) => {
-    const li = el('li', 'feed__item feed__item--' + e.kind);
-    const head = el('span', 'feed__meta', relTime(e, start) + ' · ' + Agents.agentLabel(e.agent)
-      + (e.grp ? ' · ' + Agents.groupTitle(e.grp) : '') + (e.attempt > 1 ? ' · ' + e.attempt + '-ci cəhd' : ''));
-    const body = el('span', 'feed__text', Agents.describe(e));
-    li.append(head, body, eventBadge(e));
-    return li;
-  }));
-  list.scrollTop = list.scrollHeight;                    // yeni hadisə görünsün
-}
-async function refreshFeed(checkId) {
-  await loadEvents(checkId);
-  if (state.check && state.check.id === checkId) renderFeed();
-}
 /** Nəticə: xülasə, cəhdlər, zaman xətti (hər cəhd ayrıca), süzgəcli cədvəl. */
 function renderAgents() {
   const events = AG.list;
@@ -173,4 +151,4 @@ function renderAgentTable() {
   $('ag-empty').textContent = 'Bu süzgəcə uyğun hadisə yoxdur.';
 }
 
-export { AG, loadEvents, refreshFeed, renderAgentTable, renderAgents };
+export { AG, loadEvents, renderAgentTable, renderAgents };

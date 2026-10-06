@@ -270,8 +270,12 @@ def run_check(check_id: str, resume: bool = False) -> None:
                 if isinstance(delta, dict):
                     values.update(delta)
             done = "save" in update          # sonuncu qovşaq bitdi
-            storage.update(check_id,
-                           current_step=None if done else _pending_step(values))
+            fields: dict[str, Any] = {"current_step": None if done else _pending_step(values)}
+            if not done and values.get("doc") and ({"finance", "compliance"} & set(update)):
+                # Aralıq nəticə: gedişat ekranının canlı lenti hazır tapıntıları göstərir.
+                # Frontend nəticəni yalnız "tamamlandi"-da hesabat kimi açır.
+                fields["result"] = result_view(values, check_id)
+            storage.update(check_id, **fields)
     except Exception as exc:
         snapshot = compiled.get_state(cfg)
         storage.update(

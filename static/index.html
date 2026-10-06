@@ -130,6 +130,8 @@
               <small class="fact__sub" id="fact-req-sub"></small></span></li>
             <li class="fact"><strong class="fact__num" id="fact-groups" data-count></strong><span class="fact__label">tələb qrupu</span></li>
             <li class="fact"><strong class="fact__num" id="fact-fin" data-count></strong><span class="fact__label">maliyyə yoxlaması</span></li>
+            <li class="fact"><strong class="fact__num" id="fact-econ" data-count></strong><span class="fact__label">iqtisadi yoxlama
+              <small class="fact__sub" id="fact-econ-sub"></small></span></li>
           </ul>
         </header>
         <ol class="stepper" id="stepper-upload" aria-label="Yoxlamanın mərhələləri"></ol>
@@ -174,10 +176,14 @@
               <span class="dropzone__hint" id="dropzone-hint">.docx · maksimum <span id="max-mb">25</span> MB</span>
               <input class="sr-only" type="file" id="file-input" accept=".docx" tabindex="-1">
             </div>
-            <div class="filechip" id="filechip" hidden>
-              <span class="icon filechip__ok" data-icon="check" aria-hidden="true"></span>
-              <span class="filechip__name" id="filechip-name"></span>
-              <span class="filechip__size num" id="filechip-size"></span>
+            <div class="filecard" id="filechip" hidden>
+              <span class="filecard__icon" aria-hidden="true"><span class="icon" data-icon="fileText"></span></span>
+              <span class="filecard__body">
+                <span class="filecard__name" id="filechip-name"></span>
+                <span class="filecard__meta"><span class="icon filecard__ok" data-icon="check" aria-hidden="true"></span>
+                  <span class="num" id="filechip-size"></span> · DOCX · yükləməyə hazırdır</span>
+              </span>
+              <button class="linkbtn filecard__change" type="button" id="filechip-change">Dəyiş</button>
               <button class="iconbtn" type="button" id="filechip-remove">
                 <span class="icon" data-icon="x" aria-hidden="true"></span>
                 <span class="sr-only">Faylı sil</span>
@@ -225,8 +231,11 @@
             <p class="alert alert--error" id="upload-error" role="alert" hidden></p>
 
             <div class="formfoot">
-              <p class="formfoot__next" id="next-step">Növbəti addım: yoxlama və hesabat</p>
-              <button class="btn btn--primary btn--lg" type="submit" id="submit-btn">
+              <div class="formfoot__text">
+                <p class="formfoot__next" id="next-step">Növbəti addım: yoxlama və hesabat</p>
+                <p class="formfoot__why" id="submit-why" aria-live="polite"></p>
+              </div>
+              <button class="btn btn--primary btn--lg" type="submit" id="submit-btn" aria-describedby="submit-why">
                 Davam et <span class="icon" data-icon="arrowRight" aria-hidden="true"></span>
               </button>
             </div>
@@ -244,6 +253,11 @@
                 <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="gear"></span></span>
                 <span><strong class="explain__name">Daxili uyğunluq</strong>
                   <span class="explain__text">Maliyyə rəqəmlərinin bir-biri ilə uyğunluğunu planın öz cədvəllərindən yenidən hesablayırıq.</span></span>
+              </li>
+              <li class="explain__item">
+                <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="trendUp"></span></span>
+                <span><strong class="explain__name">İqtisadi təhlil</strong>
+                  <span class="explain__text">NPV, IRR və geri ödəmə planın öz metodu ilə yenidən hesablanır; qiymət, xammal və investisiya dəyişəndə nəticənin nə qədər dayanıqlı olduğu göstərilir.</span></span>
               </li>
               <li class="explain__item">
                 <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="alert"></span></span>
@@ -265,8 +279,9 @@
             </div>
             <div class="explain__not">
               <strong>Nəyi yoxlamırıq</strong>
-              <p>Layihənin gəlirli olub-olmayacağını, bazar proqnozlarının doğruluğunu və ayrıca tələb olunan
-                sənədlərin (lisenziya, Excel modeli və s.) mövcudluğunu yoxlamırıq.</p>
+              <p>Bazar proqnozlarının real dünyada doğru çıxıb-çıxmayacağını və layihəni maliyyələşdirmək
+                qərarını. Gəlirliliyi planın <em>öz</em> rəqəmləri və fərziyyələri ilə yoxlayırıq — fərziyyələrin
+                özünü təsdiqləyən sənədləri (müqavilə, kommersiya təklifi) komitə Suallar bölməsində istəyir.</p>
             </div>
             <p class="explain__foot"><span class="icon" data-icon="info" aria-hidden="true"></span>Yoxlama investisiya qərarı deyil.</p>
           </aside>
@@ -356,26 +371,43 @@
           <p class="runloading" id="run-loading" role="status"><span class="spinner" aria-hidden="true"></span>Hesabat açılır…</p>
         </header>
         <ol class="stepper" id="stepper-run" aria-label="Yoxlamanın mərhələləri"></ol>
-        <div class="runlayout">
-          <ol class="steps" id="steps"></ol>
-          <section class="feed" aria-labelledby="feed-title">
-            <h2 class="feed__title" id="feed-title">Agentlər nə edir — canlı lent</h2>
-            <p class="feed__note">AI agentlərinin sənədin hansı hissələrinə baxdığı burada görünür.</p>
-            <ol class="feed__list" id="feed" aria-live="polite" aria-relevant="additions"></ol>
-            <p class="feed__empty" id="feed-empty">Hələ alət çağırışı yoxdur.</p>
-          </section>
+        <div class="runerr" id="run-error" role="alert" hidden>
+          <span class="runerr__icon" aria-hidden="true"><span class="icon" data-icon="alert"></span></span>
+          <div class="runerr__body">
+            <h2 class="runerr__title">Yoxlama dayandı: <span id="error-step"></span></h2>
+            <p class="runerr__reason" id="error-text"></p>
+            <p class="runerr__hint" id="error-hint"></p>
+            <details class="runerr__tech" id="error-tech-box">
+              <summary>Texniki məlumat</summary>
+              <pre class="runerr__pre" id="error-tech"></pre>
+            </details>
+            <p class="runerr__note">Tamamlanmış mərhələlər saxlanılıb — yenidən cəhddə təkrarlanmır.</p>
+            <div class="row">
+              <button class="btn btn--primary" type="button" id="retry-btn">
+                <span class="icon" data-icon="refresh" aria-hidden="true"></span>Yenidən cəhd et
+              </button>
+              <button class="btn" type="button" id="error-new">Yeni yoxlama</button>
+            </div>
+          </div>
         </div>
 
-        <div class="alert alert--error" id="run-error" role="alert" hidden>
-          <h2 class="alert__title">Yoxlama dayandı: <span id="error-step"></span></h2>
-          <p id="error-text"></p>
-          <p class="alert__note">Tamamlanmış mərhələlər saxlanılıb — davam etdirəndə təkrarlanmır.</p>
-          <div class="row">
-            <button class="btn btn--primary" type="button" id="retry-btn">
-              <span class="icon" data-icon="refresh" aria-hidden="true"></span>Yoxlamanı davam etdir
-            </button>
-            <button class="btn" type="button" id="error-new">Yeni yoxlama</button>
-          </div>
+        <div class="runlayout">
+          <section class="runcard" aria-labelledby="runprog-title">
+            <div class="runcard__head">
+              <h2 class="runcard__title" id="runprog-title">Gedişat</h2>
+              <p class="runtime" id="run-time"></p>
+            </div>
+            <ol class="rstages" id="run-stages" aria-label="Yoxlamanın mərhələləri"></ol>
+          </section>
+          <section class="runcard runfeed" aria-labelledby="runfeed-title">
+            <div class="runcard__head">
+              <h2 class="runcard__title" id="runfeed-title">Tapıntılar — canlı</h2>
+              <span class="runfeed__count" id="run-feed-count"></span>
+            </div>
+            <p class="runfeed__note">Hazır olan nəticələr burada görünür; tam hesabat yoxlama bitəndə açılır.</p>
+            <ol class="runfeed__list" id="run-feed" aria-live="polite" aria-relevant="additions"></ol>
+            <p class="runfeed__empty" id="run-feed-empty">İlk tapıntılar maliyyə yoxlamasından sonra görünəcək.</p>
+          </section>
         </div>
 
         <div class="alert alert--error" id="ingest-error" role="alert" hidden>
@@ -676,11 +708,11 @@
             <div id="req-filters"></div>
             <div class="reqbar__right">
               <label class="sr-only" for="req-group">Qrup</label>
-              <span class="field field--select"><select class="field__input" id="req-group"></select>
+              <span class="ui-field ui-field--select"><select class="ui-field__input" id="req-group"></select>
                 <span class="icon" data-icon="chevronDown" aria-hidden="true"></span></span>
               <label class="sr-only" for="req-search">Tələb mətnində axtar</label>
-              <span class="field field--search"><span class="icon" data-icon="search" aria-hidden="true"></span>
-                <input class="field__input" type="search" id="req-search" placeholder="Axtar: kod və ya mətn…" autocomplete="off"></span>
+              <span class="ui-field ui-field--search"><span class="icon" data-icon="search" aria-hidden="true"></span>
+                <input class="ui-field__input" type="search" id="req-search" placeholder="Axtar: kod və ya mətn…" autocomplete="off"></span>
             </div>
           </div>
           <p class="reqv__count" id="req-count" aria-live="polite"></p>

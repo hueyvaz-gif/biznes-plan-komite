@@ -193,12 +193,21 @@ def _public(check: dict[str, Any]) -> dict[str, Any]:
 
 def _facts() -> dict[str, int]:
     from app.agents.compliance import all_groups
+    from app.economics.rules import INTERNAL_RULES
+    from app.economics.scenario import SCENARIOS
     from app.finance_tools import RULES
     groups = all_groups()
     items = [i for g in groups for i in g["items"]]
     document_only = sum(1 for i in items if i.get("kind") == "sened")
     return {"requirements": len(items), "in_plan": len(items) - document_only, "document_only": document_only,
-            "groups": len(groups), "finance_checks": len(RULES)}
+            "groups": len(groups), "finance_checks": len(RULES),
+            # İqtisadi təhlil: daxili uyğunluq qaydaları və həssaslıq ssenariləri (kodda nə varsa — o qədər).
+            "economics_checks": len(INTERNAL_RULES), "scenarios": len(SCENARIOS)}
+
+
+def _requirement_groups() -> list[dict[str, Any]]:
+    from app.agents.compliance import all_groups
+    return [{"id": g["id"], "title": g["title"], "items": len(g["items"])} for g in all_groups()]
 
 
 @app.get("/api/meta")
@@ -220,6 +229,10 @@ async def meta() -> dict[str, Any]:
         # Hesabatın düzəliş siyahısı üçün: tələbin qısa mövzusu və konkret düzəliş mətni.
         "requirements": _requirement_texts(),
         "economics": _economics_meta(),
+        # Gedişat ekranında təxmini qalan vaxt: son tamamlanmış yoxlamaların median müddəti (yoxdursa None).
+        "typical_run_seconds": storage.typical_run_seconds(),
+        # Gedişat ekranı: tələb qrupları (hələ başlamamış qruplar da görünsün).
+        "requirement_groups": _requirement_groups(),
     }
 
 

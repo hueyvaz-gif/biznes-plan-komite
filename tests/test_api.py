@@ -45,6 +45,54 @@ def test_meta(client):
     assert any(step["id"] == "ingest" for step in data["steps"])
 
 
+def test_meta_landing_faktları_və_tipik_müddət(client, samples):
+    from app.economics.rules import INTERNAL_RULES
+    from app.economics.scenario import SCENARIOS
+    _upload(client, samples / "plan_demo_v1.docx", "Müddət testi")      # ən azı bir tamamlanmış yoxlama
+    data = client.get("/api/meta").json()
+    assert data["facts"]["economics_checks"] == len(INTERNAL_RULES)
+    assert data["facts"]["scenarios"] == len(SCENARIOS)
+    # Median müddət hadisələrdən gəlir: ya None (məlumat azdır), ya müsbət ədəd — uydurulmur.
+    assert data["typical_run_seconds"] is None or data["typical_run_seconds"] > 0
+
+
+def test_tipik_müddət_median_və_son_cəhd(monkeypatch, tmp_path):
+    from app import config, storage
+    monkeypatch.setattr(config, "DB_FILE", tmp_path / "t.db")
+    storage.init()
+    assert storage.typical_run_seconds() is None                  # məlumat yoxdur — vaxt uydurulmur
+    for i, (secs, state) in enumerate([(60, "tamamlandi"), (100, "tamamlandi"), (80, "tamamlandi"), (999, "xeta")]):
+        cid = f"t{i}"
+        storage.create(cid, "p", i + 1, "x.docx", "x")
+        storage.update(cid, run_state=state, verdict="hazir" if state == "tamamlandi" else None)
+        storage.event_add(check_id=cid, attempt=1, ts=1000.0, agent="qraf", kind="node", name="ingest")
+        storage.event_add(check_id=cid, attempt=1, ts=1000.0 + secs, agent="qraf", kind="node", name="save")
+    assert storage.typical_run_seconds() == 80                    # 60, 80, 100 → median; xəta nəzərə alınmır
+    # Yenidən cəhd: yalnız SON cəhdin müddəti (t0: 10 s) → 10, 80, 100 → 80
+    storage.event_add(check_id="t0", attempt=2, ts=5000.0, agent="qraf", kind="node", name="ingest")
+    storage.event_add(check_id="t0", attempt=2, ts=5010.0, agent="qraf", kind="node", name="save")
+    storage.event_add(check_id="t1", attempt=2, ts=6000.0, agent="qraf", kind="node", name="ingest")
+    storage.event_add(check_id="t1", attempt=2, ts=6020.0, agent="qraf", kind="node", name="save")
+    assert storage.typical_run_seconds() == 20                    # 10, 20, 80 → 20
+
+
+def test_icra_zamanı_aralıq_nəticə_saxlanılır(client, samples, monkeypatch):
+    from app import service, storage
+    calls = []
+    real = storage.update
+    def spy(check_id, **fields):
+        calls.append(dict(fields))
+        return real(check_id, **fields)
+    monkeypatch.setattr(service.storage, "update", spy)
+    _upload(client, samples / "plan_demo_v1.docx", "Aralıq nəticə")
+    partial = [c for c in calls if "result" in c and "run_state" not in c]
+    # Maliyyə və uyğunluq qovşaqlarından sonra — hesabat bitməmiş
+    assert len(partial) >= 2
+    assert partial[0]["result"]["finance"] is not None
+    assert partial[-1]["result"]["compliance"] is not None
+    assert all(c.get("current_step") for c in partial)
+
+
 def test_docx_yüklənir_və_oxunur(client, samples):
     response = _upload(client, samples / "plan_demo_v1.docx", "Demo plan")
     assert response.status_code == 200

@@ -1,13 +1,12 @@
 /* Polling və marşrutlaşdırma (?check=…&tab=…). */
 import { ApiError, api } from './api.js';
-import { $, POLL_MS, announce, el, icon, planName } from './dom.js';
-import { STEP_STATE } from './labels.js';
+import { $, POLL_MS, announce, planName } from './dom.js';
 import { state } from './state.js';
 import { closeDetail } from '../shell/detail.js';
 import { resetToUpload } from '../shell/session.js';
 import { loadHistory, markCurrentVersion, renderNavCurrent } from '../shell/sidebar.js';
 import { checkStepper, renderStepper, setOnline, showView } from '../shell/views.js';
-import { refreshFeed } from '../views/debug-log.js';
+import { finishTransition, renderRunError, renderRunProgress, sawRunning } from '../views/run-progress.js';
 import { renderReview } from '../views/review.js';
 import { renderResults } from '../views/summary.js';
 import { showUploadError } from '../views/upload-flow.js';
@@ -65,7 +64,7 @@ function openCheck(checkId, opts) {
     setRunMode('running');
     $('run-title').textContent = 'Yoxlama başladı';
     renderStepper('stepper-run', checkStepper(null));
-    renderSteps(null);
+    renderRunProgress(null);
   } else {
     showView('run', 'Hesabat açılır…');
     setRunMode('loading');
@@ -95,11 +94,8 @@ function render(check) {
     setRunMode('error');
     $('run-plan').textContent = title;
     $('run-title').textContent = 'Yoxlama dayandı';
-    renderSteps(check);
-    $('error-step').textContent = stepLabel(check.current_step);
-    $('error-text').textContent = check.error || 'Naməlum xəta.';
-    $('run-error').hidden = false;
-    refreshFeed(check.id);
+    renderRunProgress(check);
+    renderRunError(check);
     announce('Yoxlama xəta ilə dayandı.');
     return;
   }
@@ -109,8 +105,7 @@ function render(check) {
     $('run-plan').textContent = title;
     $('run-title').textContent = 'Yoxlama gedir';
     $('run-error').hidden = true;
-    renderSteps(check);
-    refreshFeed(check.id);
+    renderRunProgress(check);
     return;
   }
   if (check.verdict === 'giris_xetasi') {
@@ -118,42 +113,18 @@ function render(check) {
     setRunMode('ingest');
     $('run-plan').textContent = title;
     $('run-title').textContent = 'Fayl oxunmadı';
-    $('steps').replaceChildren();
     $('ingest-error-text').textContent = check.error || 'Fayl oxunmadı.';
     $('ingest-error').hidden = false;
     announce('Fayl oxunmadı.');
     return;
   }
-  showView('results', title);
-  renderResults(check);
-  announce('Yoxlama tamamlandı: ' + (check.verdict_label || ''));
+  const open = () => {
+    showView('results', title);
+    renderResults(check);
+    announce('Yoxlama tamamlandı: ' + (check.verdict_label || ''));
+  };
+  // Bu sessiyada gedişat izlənibsə — 600ms keçid (mərhələlər ✓, ekran yığılır), sonra hesabat.
+  if (sawRunning(check.id) && !$('view-run').hidden) finishTransition(check, open);
+  else open();
 }
-function stepLabel(stepId) {
-  const steps = (state.meta && state.meta.steps) || [];
-  const found = steps.find((s) => s.id === stepId);
-  return found ? found.label : (stepId || '—');
-}
-/** Addımlar: yalnız serverin current_step-inə görə; faiz/vaxt uydurulmur. */
-function renderSteps(check) {
-  const host = $('steps');
-  host.replaceChildren();
-  const steps = (state.meta && state.meta.steps) || [];
-  const current = check ? check.current_step : null;
-  const runState = check ? check.run_state : 'gozleyir';
-  const currentIndex = steps.findIndex((s) => s.id === current);
-  steps.forEach((step, index) => {
-    let status = 'gozleyir';
-    if (runState === 'tamamlandi') status = 'tamamlandi';
-    else if (currentIndex >= 0 && index < currentIndex) status = 'tamamlandi';
-    else if (index === currentIndex) status = runState === 'xeta' ? 'xeta' : 'isleyir';
-    const li = el('li', 'step step--' + status);
-    const mark = el('span', 'step__mark');
-    if (status === 'tamamlandi') mark.append(icon('check'));
-    if (status === 'xeta') mark.append(icon('x'));
-    li.append(mark, el('span', 'step__label', step.label), el('span', 'step__state', STEP_STATE[status]));
-    if (status === 'isleyir') li.setAttribute('aria-current', 'step');
-    host.append(li);
-  });
-}
-
 export { openCheck, poller };

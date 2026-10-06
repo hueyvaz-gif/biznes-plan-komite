@@ -4,6 +4,7 @@ import { $, announce, el, formatAz, formatDate, formatSize, icon, planName, setB
 import { openCheck } from '../core/router.js';
 import { state } from '../core/state.js';
 import { loadHistory } from '../shell/sidebar.js';
+import { playOnce } from '../ui/motion.js';
 
 /* ── A: biznes plan faylı ───────────────────────────────────────────────── */
 
@@ -17,13 +18,16 @@ function setFile(file) {
     $('filechip').hidden = true;
     $('file-input').value = '';
     $('dropzone').classList.remove('has-file');
+    $('dropzone').hidden = false;
     updateFormState();
     return;
   }
   $('filechip-name').textContent = result.file.name;
   $('filechip-size').textContent = formatSize(result.file.size);
   $('filechip').hidden = false;
+  // Drop zonası faylın kartına çevrilir (ikon, ad, ölçü, "Dəyiş").
   $('dropzone').classList.add('has-file');
+  $('dropzone').hidden = true;
   announce('Biznes plan seçildi: ' + result.file.name);
   updateFormState();
 }
@@ -69,7 +73,15 @@ function suggestExistingPlan() {
 function updateFormState() {
   const named = planMode() === 'existing' ? Boolean($('plan-select').value) : $('plan-id').value.trim().length > 0;
   const ready = Boolean(state.file) && named;
-  $('submit-btn').classList.toggle('is-ready', ready);
+  const btn = $('submit-btn');
+  // Hazır olanda bir dəfə: rəng keçidi + yüngül pulse (yalnız hazır olmayan → hazır keçidində).
+  if (ready && !btn.classList.contains('is-ready')) playOnce(btn, 'is-pulsing');
+  btn.classList.toggle('is-ready', ready);
+  btn.setAttribute('aria-disabled', String(!ready));
+  // Səbəb görünür: niyə hələ davam etmək olmur.
+  $('submit-why').textContent = ready ? ''
+    : !state.file ? 'Əvvəlcə .docx faylı seçin'
+      : planMode() === 'existing' ? 'Versiya əlavə ediləcək planı seçin' : 'Planın adını yazın';
   const extras = state.extras.some((e) => !e.error) || $('extra-text').value.trim().length > 0;
   $('next-step').textContent = 'Növbəti addım: ' + (extras ? 'tələblərin təsdiqi' : 'yoxlama və hesabat');
 }
@@ -118,6 +130,16 @@ function wireDropzone() {
     if (file) setFile(file);
   });
   $('filechip-remove').addEventListener('click', () => { setFile(null); zone.focus(); });
+  $('filechip-change').addEventListener('click', () => input.click());
+  // Kart görünəndə də fayl üzərinə atıla bilər (yeni fayl köhnəni əvəz edir).
+  const card = $('filechip');
+  card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('is-over'); });
+  card.addEventListener('dragleave', () => card.classList.remove('is-over'));
+  card.addEventListener('drop', (e) => {
+    e.preventDefault(); card.classList.remove('is-over');
+    const file = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+    if (file) setFile(file);
+  });
 }
 /* ── B: əlavə tələb sənədləri ───────────────────────────────────────────── */
 

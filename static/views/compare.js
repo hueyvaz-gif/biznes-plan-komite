@@ -66,9 +66,9 @@ function selector() {
   const label = (v) => `v${v.version} (${fmtDate(v.created_at).slice(0, 5)} ${fmtDate(v.created_at).slice(11)})`;
   // Digər tərəfdə seçilmiş versiya bu siyahıda bağlıdır (eyni versiya özü ilə müqayisə olunmur).
   const select = (id, value, other, onChange) => {
-    const s = el('select', { class: 'field__input', id, on: { change: (e) => onChange(e.target.value) } },
+    const s = el('select', { class: 'ui-field__input', id, on: { change: (e) => onChange(e.target.value) } },
       versions.map((v) => el('option', { value: v.id, text: label(v) + (v.id === state.check.id ? ' — açıq' : ''), selected: v.id === value, disabled: v.id === other })));
-    return el('span', { class: 'field field--select' }, s, icon('chevronDown', { size: 'sm' }));
+    return el('span', { class: 'ui-field ui-field--select' }, s, icon('chevronDown', { size: 'sm' }));
   };
   const swap = (from, to) => {
     if (from === to) return;
