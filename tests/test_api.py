@@ -68,6 +68,27 @@ def test_mövcud_plana_açıq_seçimlə_ikinci_versiya(client, samples):
     assert second["plan_name"] == "Versiya testi"
 
 
+def test_istənilən_iki_versiyanın_müqayisəsi_cari_statuslarla(client, samples):
+    from app import storage
+    first = _upload(client, samples / "plan_demo_v1.docx", "Müqayisə testi").json()
+    with open(samples / "plan_demo_v2.docx", "rb") as fh:
+        second = client.post("/api/checks", files={"file": ("v2.docx", fh, "application/octet-stream")},
+                             data={"existing_plan_id": first["plan_id"], "fail_at": ""}).json()
+    # Hansı tərəfdən soruşulsa da: köhnə versiya "əvvəl", yeni "sonra"
+    for a, b in ((second["check_id"], first["check_id"]), (first["check_id"], second["check_id"])):
+        r = client.get(f"/api/checks/{a}/compare", params={"with": b})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["previous"]["version"] == 1 and data["current"]["version"] == 2
+        # Status saxlanmış müqayisədən yox, yoxlamanın CARİ verdict-indən gəlir
+        assert data["verdict"] == {"before": storage.get(first["check_id"])["verdict"], "after": storage.get(second["check_id"])["verdict"]}
+        assert {"placeholders", "finance", "requirements", "counts"} <= set(data)
+    assert client.get(f"/api/checks/{first['check_id']}/compare", params={"with": first["check_id"]}).status_code == 400
+    other = _upload(client, samples / "plan_demo_v1.docx", "Başqa plan").json()
+    assert client.get(f"/api/checks/{first['check_id']}/compare", params={"with": other["check_id"]}).status_code == 400
+    assert client.get(f"/api/checks/{first['check_id']}/compare", params={"with": "yoxdur"}).status_code == 404
+
+
 def test_eyni_adlı_yeni_plan_avtomatik_birləşdirilmir(client, samples):
     a = _upload(client, samples / "plan_demo_v1.docx", "Eyni ad").json()
     b = _upload(client, samples / "plan_demo_v2.docx", "Eyni ad").json()

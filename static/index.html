@@ -690,10 +690,7 @@
         <!-- Əlavə tələblər -->
         <div class="panel" id="panel-elave" role="tabpanel" aria-labelledby="tab-elave" tabindex="0" hidden>
           <h2 class="print-only print-title">Əlavə tələblər</h2>
-          <p class="empty" id="extra-empty" hidden>
-            Bu yoxlamada əlavə tələb sənədi yüklənməyib. Yeni yoxlamada "B. Əlavə tələb
-            sənədləri" sahəsindən əlavə edə bilərsiniz.
-          </p>
+          <div id="extra-empty" hidden></div>
           <div id="extra-meta"></div>
           <ul class="extraresults" id="extra-results"></ul>
         </div>
@@ -718,7 +715,7 @@
           <ol class="attempts" id="ag-attempts"></ol>
           <div id="ag-gantts"></div>
           <div class="agpick" id="ag-pick" role="region" aria-live="polite" hidden></div>
-          <h2 class="panel__title panel__title--spaced ag-all">Bütün hadisələr</h2>
+          <h2 class="panel__title panel__title--spaced ag-all">Bütün hadisələr <span class="ag-count" id="ag-count"></span></h2>
           <div class="toolbar">
             <div class="toolbar__right">
               <label class="sr-only" for="ag-filter">Agent</label>
@@ -727,7 +724,7 @@
             </div>
           </div>
           <p class="empty" id="ag-empty" hidden></p>
-          <div class="tablewrap">
+          <div class="tablewrap ag-scroll" tabindex="0" role="region" aria-label="Agent hadisələri (sürüşdürülür)">
             <table class="table table--compact" id="ag-table">
               <caption class="sr-only">Agent hadisələri</caption>
               <thead><tr>

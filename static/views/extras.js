@@ -1,6 +1,19 @@
 /* Əlavə tələblər tabı. */
 import { $, badge, el, formatDate } from '../core/dom.js';
 import { openRequirementDetail, reqMeta } from './requirements.js';
+import { state } from '../core/state.js';
+import { EmptyState } from '../ui/card.js';
+import { setExtrasOpen, setPlanMode } from './upload-flow.js';
+
+/** Boş vəziyyətin əməliyyatı: eyni plan üçün yeni versiya formu, "B. Əlavə tələb sənədləri" açıq. */
+function startWithExtras() {
+  const planId = state.check && state.check.plan_id;
+  $('nav-new').click();
+  if (planId) setPlanMode('existing', planId);
+  setExtrasOpen(true);
+  $('extra-toggle').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  $('extra-toggle').focus({ preventScroll: true });
+}
 
 /* ── Əlavə tələblər ─────────────────────────────────────────────────────── */
 
@@ -10,7 +23,14 @@ function renderExtraResults(p) {
   const meta = $('extra-meta');
   host.replaceChildren();
   meta.replaceChildren();
-  $('extra-empty').hidden = Boolean(p.extras) || items.length > 0;
+  const empty = $('extra-empty');
+  empty.hidden = Boolean(p.extras) || items.length > 0;
+  if (!empty.hidden) {
+    empty.replaceChildren(EmptyState({ icon: 'fileText', title: 'Əlavə tələb sənədi yüklənməyib',
+      text: 'Standart siyahıdan başqa tələblər (məsələn, bankın və ya fondun öz meyarları) varsa, onları sənəd kimi yükləyin — '
+        + 'hər bənd biznes planla ayrıca yoxlanılacaq və yekun statusa daxil olacaq.',
+      action: { label: 'Yeni versiya + əlavə tələblər', onClick: startWithExtras } }));
+  }
   if (p.extras) {
     const files = (p.extras.attachments || []).map((a) => a.name + (a.status === 'oxundu' ? '' : ' (oxunmadı)'));
     meta.append(el('p', 'panel__lead', 'Mənbə sənədlər: ' + (files.join(', ') || '—')

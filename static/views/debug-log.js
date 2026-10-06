@@ -167,6 +167,8 @@ function renderAgentTable() {
       el('td', 'num', Agents.seconds(e.duration_ms)), status);
     return tr;
   }));
+  const count = $('ag-count');
+  if (count) count.textContent = events.length === AG.list.length ? `${events.length}` : `${events.length} / ${AG.list.length}`;
   $('ag-empty').hidden = events.length > 0;
   $('ag-empty').textContent = 'Bu süzgəcə uyğun hadisə yoxdur.';
 }

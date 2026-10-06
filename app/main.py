@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -466,6 +466,27 @@ async def get_section_text(check_id: str, title: str) -> dict[str, Any]:
     if found is None:
         raise HTTPException(status_code=404, detail="Belə bölmə tapılmadı.")
     return found
+
+
+@app.get("/api/checks/{check_id}/compare")
+async def compare_versions(check_id: str, with_: str = Query(..., alias="with")) -> dict[str, Any]:
+    """Eyni planın istənilən iki tamamlanmış versiyası — CARİ statuslarla (yenidən hesablanmış verdict).
+    Köhnə versiya həmişə "əvvəl", yenisi "sonra" kimi götürülür. Saxlanmış müqayisədən fərqli olaraq
+    köhnəlmiş status göstərilmir."""
+    from app import compare as cmp
+    a, b = storage.get(check_id), storage.get(with_)
+    if a is None or b is None:
+        raise HTTPException(status_code=404, detail="Yoxlama tapılmadı.")
+    if a["id"] == b["id"]:
+        raise _bad_request("Eyni versiya ilə müqayisə olunmur.")
+    if a["plan_id"] != b["plan_id"]:
+        raise _bad_request("Versiyalar eyni plana aid deyil.")
+    if a.get("run_state") != "tamamlandi" or b.get("run_state") != "tamamlandi":
+        raise _bad_request("Hər iki versiyanın yoxlaması tamamlanmalıdır.")
+    old, new = sorted((a, b), key=lambda c: c["version"])
+    out = cmp.compare(cmp.snapshot(old.get("result"), old), cmp.snapshot(new.get("result"), new))
+    out["current"] = {k: new.get(k) for k in ("id", "version", "file_name", "created_at", "verdict")}
+    return out
 
 
 @app.get("/api/checks/{check_id}/doc")
