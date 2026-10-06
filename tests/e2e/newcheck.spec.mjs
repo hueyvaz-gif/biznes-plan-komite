@@ -41,6 +41,7 @@ test('landing: faktlar konfiqurasiyadan (iqtisadi yoxlamalar daxil); "Nəyi yoxl
   await expect(page.locator('#fact-econ')).toHaveText(String(meta.facts.economics_checks));
   await expect(page.locator('#fact-econ-sub')).toHaveText(`(+${meta.facts.scenarios} həssaslıq ssenarisi)`);
   const not = page.locator('.explain__not');
+  await page.locator('.upload-info > summary').click();
   await expect(not).not.toContainText('gəlirli olub-olmayacağını');
   await expect(page.locator('.explain__name', { hasText: 'İqtisadi təhlil' })).toBeVisible();
   // Planın adı sahəsi normal forma sahəsidir (ui-field nəzarət stili ilə toqquşmur)

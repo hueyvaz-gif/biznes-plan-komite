@@ -1,12 +1,12 @@
-/* Tablar: 6 əsas tab + "Daha çox" (Əlavə tələblər, Müqayisə); Texniki jurnal yalnız ?debug=1.
+/* Tablar: 5 əsas tab + "Daha çox" (tələblər, boş yerlər, əlavə tələblər, müqayisə); jurnal yalnız ?debug=1.
  * Sürüşən aktiv indikator, ton badge-ləri, klaviatura qısayolları, panel keçid animasiyası,
  * hər tab üçün scroll mövqeyi yaddaşı. URL ?tab=… geri uyğundur (köhnə linklər işləyir). */
 import { $, el } from '../core/dom.js';
 import { reducedMotion } from '../ui/motion.js';
 
-export const PRIMARY = ['panel-xulase', 'panel-maliyye', 'panel-iqtisadi', 'panel-teleb', 'panel-bosyer', 'panel-suallar'];
+export const PRIMARY = ['panel-xulase', 'panel-duzelis', 'panel-maliyye', 'panel-iqtisadi', 'panel-suallar'];
 /** Həmişə "Daha çox" menyusunda olan tablar. */
-const MORE = ['tab-elave', 'tab-muqayise'];
+const MORE = ['tab-teleb', 'tab-bosyer', 'tab-elave', 'tab-muqayise'];
 const DEBUG = 'tab-agentler';
 
 /** ?debug=1 və ya köhnə ?tab=agentler linki — Texniki jurnal görünür. */
@@ -21,6 +21,7 @@ let current = null;
 
 function selectTab(panelId, focus) {
   if (!$(panelId) || (panelId === 'panel-agentler' && !debugMode())) panelId = 'panel-xulase';
+  $('view-results')?.classList.toggle('is-overview', panelId === 'panel-xulase');
   const prev = current;
   if (prev && prev !== panelId) scrollMemory.set(prev, scrollY);
   document.querySelectorAll('#tabs .tab').forEach((tab) => {

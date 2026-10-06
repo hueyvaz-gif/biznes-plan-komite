@@ -1,7 +1,7 @@
 /* Command palette (Ctrl/Cmd + K): planlar, versiyalar, tablar, tələblər (TS2…), düzəlişlər,
  * iqtisadi tapıntılar, suallar, boş yerlər. Seçim → müvafiq tab, elementə scroll, 1,5 s vurğu.
  * Klaviatura: ↑ ↓ seçim, Enter keçid, Esc bağla. ARIA: combobox + listbox (aria-activedescendant).
- * Qısayollar: 1–6 əsas tablar, "g n" Nəticə, "?" qısayollar paneli. */
+ * Qısayollar: 1–5 əsas tablar, "g n" İcmal, "?" qısayollar paneli. */
 import { api } from '../core/api.js';
 import { $, planName } from '../core/dom.js';
 import { openCheck } from '../core/router.js';
@@ -11,7 +11,7 @@ import { el, nextId } from '../ui/el.js';
 import { icon } from '../ui/icons.js';
 import { reducedMotion } from '../ui/motion.js';
 import { revealRequirement } from '../views/requirements.js';
-import { setFixesOpen } from '../views/summary.js';
+import { focusFix } from '../views/summary-panel.js';
 import { openFinding } from '../views/econ-panel.js';
 import { fmtRelative } from '../format.js';
 
@@ -20,7 +20,7 @@ let versions = [];               // cari planın versiyaları (palette açıland
 document.addEventListener('econ:data', (e) => { econ = e.detail; });
 
 const TAB_NAMES = {
-  'panel-xulase': 'Nəticə', 'panel-maliyye': 'Maliyyə', 'panel-iqtisadi': 'İqtisadi təhlil', 'panel-teleb': 'Standart tələblər',
+  'panel-xulase': 'İcmal', 'panel-duzelis': 'Düzəlişlər', 'panel-maliyye': 'Maliyyə', 'panel-iqtisadi': 'İqtisadi təhlil', 'panel-teleb': 'Standart tələblər',
   'panel-bosyer': 'Boş yerlər', 'panel-suallar': 'Suallar və sənədlər', 'panel-elave': 'Əlavə tələblər',
   'panel-muqayise': 'Müqayisə', 'panel-agentler': 'Texniki jurnal',
 };
@@ -35,8 +35,8 @@ function collect() {
   const out = [];
   const inResults = !!state.check && !$('view-results').hidden;
   if (inResults) {
-    const tabs = [...PRIMARY, 'panel-elave', 'panel-muqayise', ...(debugMode() ? ['panel-agentler'] : [])];
-    tabs.forEach((id, i) => out.push({ type: 'tab', title: TAB_NAMES[id], code: i < 6 ? String(i + 1) : '', go: () => selectTab(id, true) }));
+    const tabs = [...PRIMARY, 'panel-teleb', 'panel-bosyer', 'panel-elave', 'panel-muqayise', ...(debugMode() ? ['panel-agentler'] : [])];
+    tabs.forEach((id, i) => out.push({ type: 'tab', title: TAB_NAMES[id], code: i < PRIMARY.length ? String(i + 1) : '', go: () => selectTab(id, true) }));
     const r = state.check.result || {};
     for (const it of (r.compliance || {}).items || []) {
       out.push({ type: 'req', code: it.req_id, title: it.text, sub: it.group_title,
@@ -44,7 +44,7 @@ function collect() {
     }
     for (const f of (state.report && state.report.fixes) || []) {
       out.push({ type: 'fix', code: (f.codes || []).map((c) => c.code).join(' '), title: f.topic, sub: 'Nə düzəltmək lazımdır',
-        go: () => goTarget('panel-xulase', f.anchor, () => setFixesOpen(true)) });
+        go: () => { focusFix(f.anchor); flash(document.getElementById(f.anchor)); } });
     }
     ((r.ingest || {}).placeholders || []).forEach((p, i) => {
       out.push({ type: 'hole', title: String(p.text || '').replace(/^\[|\]$/g, ''), sub: p.section_title, go: () => goTarget('panel-bosyer', 'ph-' + i) });
@@ -207,8 +207,8 @@ export async function openPalette() {
 let help = null;
 const SHORTCUTS = [
   ['Ctrl / ⌘ + K', 'Sürətli keçid: tələb, tapıntı, sual, plan'],
-  ['1 – 6', 'Əsas tablar: Nəticə, Maliyyə, İqtisadi, Tələblər, Boş yerlər, Suallar'],
-  ['g, sonra n', 'Nəticə tabına qayıt'],
+  ['1 – 5', 'Əsas tablar: İcmal, Düzəlişlər, Maliyyə, İqtisadi təhlil, Suallar'],
+  ['g, sonra n', 'İcmala qayıt'],
   ['← →', 'Tab zolağında əvvəlki / növbəti tab'],
   ['Esc', 'Paneli və ya pəncərəni bağla'],
   ['?', 'Bu siyahı'],
@@ -240,7 +240,7 @@ export function wireShortcuts() {
     if (e.key === '?') { e.preventDefault(); openShortcuts(); return; }
     const inResults = state.check && !$('view-results').hidden;
     if (!inResults) return;
-    if (/^[1-6]$/.test(e.key)) { e.preventDefault(); selectTab(PRIMARY[Number(e.key) - 1], true); return; }
+    if (/^[1-5]$/.test(e.key)) { e.preventDefault(); selectTab(PRIMARY[Number(e.key) - 1], true); return; }
     if (e.key === 'g') { gPending = Date.now(); return; }
     if (e.key === 'n' && Date.now() - gPending < 1000) { gPending = 0; e.preventDefault(); selectTab('panel-xulase', true); }
   });

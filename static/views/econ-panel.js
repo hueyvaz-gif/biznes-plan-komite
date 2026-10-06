@@ -473,14 +473,13 @@ function renderReality(d) {
   if (checked.length) parts.push(el('ul', { class: 'rbars' }, checked.map((f) => rangeRow(f, planOf(f)))));
   if (waiting.length) {
     parts.push(EmptyState({ compact: true, icon: 'search',
-      title: `Bazar göstəriciləri ilə tutuşdurma üçün ${waiting.length} benchmark-ın mənbəyi gözlənilir`,
-      text: 'Mənbəsi və tarixi göstərilməyən benchmark istifadə olunmur — rəqəm təxmin edilmir.' }),
-    DataTable({ dense: true, caption: 'Mənbəyi gözlənilən benchmark-lar', rows: waiting.map((f) => ({ ...f })),
+      title: 'Bazarla müqayisə tamamlanmayıb',
+      text: `${waiting.length} göstərici üçün mənbə və tarix çatışmır.` }),
+    el('details', { class: 'task-note' }, el('summary', { text: 'Mənbəsi çatışmayan göstəricilər' }),
+    DataTable({ dense: true, caption: 'Mənbəyi gözlənilən göstəricilər', rows: waiting.map((f) => ({ ...f })),
       columns: [{ key: 'title', label: 'Göstərici' },
         { key: 'plan', label: 'Planda', type: 'number', render: (f) => { const p = planOf(f); return p ? numberText(p) : DASH; } },
-        { key: 'src', label: 'Mənbə', render: () => el('span', { class: 'efc__src', text: 'mənbə: —' }) }] }),
-    el('p', { class: 'rbars__admin' }, icon('info', { size: 'sm' }), el('span', null, 'Admin üçün: ', el('code', { text: 'config/benchmarks/gubre.yaml' }),
-      ' faylında hər göstəricinin min/max, mənbə və tarix sahələrini doldurun.')));
+        { key: 'src', label: 'Mənbə', render: () => el('span', { class: 'efc__src', text: 'Gözlənilir' }) }] })));
   }
   host.replaceChildren(...parts);
 }

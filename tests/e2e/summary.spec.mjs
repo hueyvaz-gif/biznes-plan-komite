@@ -14,11 +14,11 @@ test.beforeEach(async ({ request, page }) => {
   });
 });
 
-async function open(page) {
+async function open(page, panel = 'xulase') {
   const problems = [];
   page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(m.text()); });
   page.on('pageerror', (e) => problems.push(e.message));
-  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.goto(`/?check=${CHECK}&tab=${panel}`, { waitUntil: 'networkidle' });
   await expect(page.locator('#sum-sentence')).not.toBeEmpty();
   return problems;
 }
@@ -26,8 +26,8 @@ async function open(page) {
 test('bir cümləlik nəticə: say düzəliş siyahısı ilə eynidir', async ({ page }) => {
   const problems = await open(page);
   const cards = await page.locator('.fixc.fixc--duzelis, .fixc.fixc--kritik').count();
-  await expect(page.locator('#sum-sentence')).toContainText(`Plan təqdimata ${cards} düzəlişdən sonra hazır olacaq.`);
-  await expect(page.locator('#sum-sentence')).toContainText('Ən vacibi:');
+  await expect(page.locator('#sum-sentence')).toContainText(`Təqdimatdan əvvəl ${cards} düzəlişi tamamlayın.`);
+  await expect(page.locator('#sum-priorities .priority')).toHaveCount(3);
   expect(problems).toEqual([]);
 });
 
@@ -37,38 +37,38 @@ test('göstəricilər: klik müvafiq taba və filtrə aparır', async ({ page })
   await expect(page).toHaveURL(/tab=maliyye/);
   await expect(page.locator('[data-fin="problem"]')).toHaveAttribute('aria-pressed', 'true');
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.locator('#sum-tiles .ui-tile', { hasText: 'Tələblər' }).click();
-  await expect(page).toHaveURL(/tab=teleb/);
-  await expect(page.locator('[data-req="problem"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#sum-tiles .ui-tile', { hasText: 'Görüləcək işlər' }).click();
+  await expect(page).toHaveURL(/tab=duzelis/);
+  await expect(page.locator('#fixes')).toBeVisible();
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.locator('#sum-tiles .ui-tile', { hasText: 'Boş yerlər' }).click();
-  await expect(page).toHaveURL(/tab=bosyer/);
+  await page.locator('#sum-tiles .ui-tile', { hasText: 'Əlavə sənədlər' }).click();
+  await expect(page).toHaveURL(/tab=duzelis/);
+  await expect(page.locator('#docs-sec')).toBeInViewport();
 });
 
 test('checklist: işarə sayğacı yeniləyir və səhifə yenilənəndən sonra qalır', async ({ page }) => {
-  await open(page);
+  await open(page, 'duzelis');
   const total = await page.locator('.fixc').count();
-  await expect(page.locator('#fix-progress-text')).toHaveText(`0/${total} işarələnib`);
+  await expect(page.locator('#fix-progress-text')).toHaveText(`0/${total} iş tamamlandı kimi işarələnib`);
   await page.locator('.fixc__cb').nth(0).check();
   await page.locator('.fixc__cb').nth(2).check();
-  await expect(page.locator('#fix-progress-text')).toHaveText(`2/${total} işarələnib`);
+  await expect(page.locator('#fix-progress-text')).toHaveText(`2/${total} iş tamamlandı kimi işarələnib`);
   await expect(page.locator('.fixc').nth(0)).toHaveClass(/is-done/);
   await page.reload({ waitUntil: 'networkidle' });
-  await expect(page.locator('#fix-progress-text')).toHaveText(`2/${total} işarələnib`);
+  await expect(page.locator('#fix-progress-text')).toHaveText(`2/${total} iş tamamlandı kimi işarələnib`);
   await expect(page.locator('.fixc__cb').nth(2)).toBeChecked();
   // İşarə statusu dəyişmir: hero və tab nişanı eyni qalır.
   await expect(page.locator('#res-status-label')).toHaveText('Düzəliş lazımdır');
 });
 
-test('"Daha N bənd göstər": gizli kartlar açılır, inert götürülür', async ({ page }) => {
-  await open(page);
-  const toggle = page.locator('#fixes-toggle');
-  await expect(toggle).toHaveText(/Daha \d+ bənd göstər/);
-  await expect(page.locator('#fixes-more')).toHaveAttribute('inert', '');
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#fixes-more')).not.toHaveAttribute('inert', '');
-  await expect(page.locator('#fixes-more .fixc').first()).toBeVisible();
+test('düzəlişlər qruplaşdırılıb, bütün bəndlər dərhal görünür', async ({ page }) => {
+  await open(page, 'duzelis');
+  await expect(page.locator('#fixgroup-main')).toBeVisible();
+  await expect(page.locator('#fixgroup-clarify')).toBeVisible();
+  await expect(page.locator('#fixes .fixc')).toHaveCount(9);
+  await expect(page.locator('#fixes-clarify .fixc')).toHaveCount(1);
+  await expect(page.locator('#fixes-toggle')).toBeHidden();
+  await expect(page.locator('#fixes .fixc').last()).toBeVisible();
 });
 
 test('boş vəziyyət mətnləri məzmun olanda DOM-da yoxdur', async ({ page }) => {
@@ -78,11 +78,10 @@ test('boş vəziyyət mətnləri məzmun olanda DOM-da yoxdur', async ({ page })
   await expect(page.locator('#about-result')).not.toContainText('əvvəl:');
 });
 
-test('FCFF düsturu rəqəm yox, "düzgündür" kimi göstərilir', async ({ page }) => {
+test('icmalda yalnız diqqət tələb edən maliyyə bəndləri göstərilir', async ({ page }) => {
   await open(page);
-  const row = page.locator('#finsum-host tr', { hasText: 'FCFF' });
-  await expect(row).toContainText('düzgündür');
-  await expect(row).not.toContainText('−1');
+  await expect(page.locator('#finsum-host')).toContainText('Dəqiqləşdirmə');
+  await expect(page.locator('#finsum-host')).not.toContainText('FCFF');
 });
 
 test('"Yoxlama haqqında" default yığılıdır, keçid onu açır', async ({ page }) => {
@@ -109,7 +108,7 @@ test('ayrıca sənəd: yükləmə → "yoxlanılır" → nəticə inline (API mo
       analysis: state === 'isleyir' ? { state } : { state, checks: [{ title: 'HS kodları', detail: '', status: 'ok' }] } };
     await route.fulfill({ json: { ...real, evidence: [...(real.evidence || []), ev] } });
   });
-  await open(page);
+  await open(page, 'duzelis');
   const item = page.locator('.docitem[data-code="LT3"]');
   await expect(item).toContainText('Gözlənilir');
   const chooser = page.waitForEvent('filechooser');
@@ -123,8 +122,8 @@ test('ayrıca sənəd: yükləmə → "yoxlanılır" → nəticə inline (API mo
 
 test('375px: düzəliş kartları tək sütun, üfüqi scroll yoxdur', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
-  await open(page);
+  await open(page, 'duzelis');
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
-  const cols = await page.locator('.fixc__cols').first().evaluate((n) => getComputedStyle(n).gridTemplateColumns.split(' ').length);
-  expect(cols).toBe(1);
+  await expect(page.locator('.fixc__action').first()).toBeVisible();
+  await expect(page.locator('.fixc__detail-body').first()).toBeHidden();
 });

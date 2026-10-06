@@ -72,7 +72,7 @@ test('tələblər: sətir yerində açılır — sitat, "Sənəddə yeri" sənə
 
 /* ── Sənəd görüntüsü ────────────────────────────────────────────────────── */
 test('sənəd görüntüsü: mini-xəritə, [ ] ilə keçid, Esc fokusu qaytarır, sitatların çoxu tapılır', async ({ page }) => {
-  await open(page, 'xulase');
+  await open(page, 'duzelis');
   const opener = page.locator('.fixc__where').first();
   await opener.click();
   const drawer = page.locator('dialog.ui-drawer');

@@ -12,7 +12,20 @@ import { fillPlanSelect, setPlanMode } from '../views/upload-flow.js';
 /* ── Tarixçə (sol naviqasiya) ───────────────────────────────────────────── */
 
 let historyGeneration = 0;
+function filterPlans() {
+  const query = ($('plan-search')?.value || '').trim().toLocaleLowerCase('az');
+  let visible = 0;
+  document.querySelectorAll('#history .plan').forEach((item) => {
+    item.hidden = !item.dataset.name.includes(query);
+    if (!item.hidden) visible++;
+  });
+  const empty = $('history-empty');
+  empty.hidden = visible > 0;
+  empty.textContent = query ? 'Bu adda plan tapılmadı.' : 'İlk planınızı yükləyin — burada görünəcək.';
+}
 async function loadHistory() {
+  const search = $('plan-search');
+  if (search && !search.dataset.wired) { search.addEventListener('input', filterPlans); search.dataset.wired = '1'; }
   const generation = ++historyGeneration;
   const list = $('history');
   const empty = $('history-empty');
@@ -45,6 +58,7 @@ async function loadHistory() {
   empty.textContent = 'Hələ heç bir yoxlama aparılmayıb. İlk planınızı yükləyin — burada görünəcək.';
   empty.hidden = plans.length > 0;
   if (state.check) markCurrentVersion(state.check);
+  filterPlans();
 }
 function runBadge(item) {
   const run = item.run_state || item.last_run_state;
@@ -60,6 +74,7 @@ function runBadge(item) {
 function planItem(plan) {
   const item = el('li', 'plan');
   item.dataset.plan = plan.plan_id;
+  item.dataset.name = planName(plan).toLocaleLowerCase('az');
   const head = el('button', 'plan__head');
   head.type = 'button';
   head.setAttribute('aria-expanded', 'false');
@@ -170,16 +185,7 @@ function markCurrentVersion(check) {
     b.classList.toggle('is-current', on);
     if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
   });
-  // Cari plan bir dəfə avtomatik açılır. İşarə DOM elementindədir: tarixçə
-  // yenidən qurulanda yeni element yenə açılır, istifadəçi bağlasa isə məcbur açılmır.
   document.querySelectorAll('.plan').forEach((p) => p.classList.toggle('is-current', p.dataset.plan === check.plan_id));
-  const item = document.querySelector('.plan[data-plan="' + CSS.escape(check.plan_id) + '"]');
-  if (item && !item.dataset.autoOpened) {
-    item.dataset.autoOpened = '1';
-    const head = item.querySelector('.plan__head');
-    const panel = item.querySelector('.plan__panel');
-    togglePlan(head, panel, panel.querySelector('.versions'), check.plan_id, true);
-  }
 }
 function renderNavCurrent(check) {
   $('nav-current').hidden = false;

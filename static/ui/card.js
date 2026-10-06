@@ -1,7 +1,7 @@
 /* Card, StatTile, ProgressRing, MiniBar, KeyValue, EmptyState, Skeleton. */
 import { el } from './el.js';
 import { icon } from './icons.js';
-import { countUp, onFirstVisible, reducedMotion } from './motion.js';
+import { onFirstVisible, reducedMotion } from './motion.js';
 import { fmtNumber } from '../format.js';
 
 /**
@@ -59,7 +59,7 @@ export function MiniBar({ value, max, segments, label } = {}) {
 
 /**
  * StatTile({label, value, format, sub, delta: {text, tone}, onClick, progress: {value, max}, segments, ring}).
- * onClick varsa tile düymədir (klaviatura ilə əlçatan). Dəyər count-up ilə gəlir (ilk görünəndə, bir dəfə).
+ * onClick varsa tile düymədir (klaviatura ilə əlçatan). Rəqəm həmişə son dəyəri göstərir.
  */
 export function StatTile({ label, value, format = (v) => fmtNumber(Math.round(v)), unit, sub, delta, onClick, progress, segments, tone } = {}) {
   const valueNode = el('span', { class: 'ui-tile__num' });
@@ -75,7 +75,6 @@ export function StatTile({ label, value, format = (v) => fmtNumber(Math.round(v)
     : el('div', { class: ['ui-tile', tone && `ui-tile--${tone}`] }, ...body);
   if (typeof value === 'number') {
     valueNode.textContent = format(value);
-    onFirstVisible(node, () => countUp(valueNode, value, format));
   } else valueNode.textContent = value ?? '—';
   return node;
 }

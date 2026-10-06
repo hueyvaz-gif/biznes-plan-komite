@@ -23,7 +23,7 @@ let uid = 0;
  * cashflowChart({years, fcff, cumulative, residual, ratePct, payback}) → {node, table}
  *   payback — backend-in PP dəyəri (il, ilk ildən sayılır), yoxdursa marker çəkilmir.
  */
-export function cashflowChart({ years, fcff, cumulative, residual, ratePct, payback }) {
+export function cashflowChart({ years, fcff, cumulative, residual, ratePct, payback, compact = false }) {
   const id = 'cf' + (++uid);
   const wrap = el('div', { class: 'cfc' });
   const tip = el('div', { class: 'cfc__tip', role: 'status', 'aria-live': 'polite', hidden: true });
@@ -41,7 +41,7 @@ export function cashflowChart({ years, fcff, cumulative, residual, ratePct, payb
   function draw() {
     const W = Math.max(320, Math.round(wrap.clientWidth || 720));
     const narrow = W < 560;
-    const H = narrow ? 260 : 320;
+    const H = compact ? 240 : narrow ? 260 : 320;
     const m = { t: 34, r: 16, b: 30, l: narrow ? 44 : 60 };
     const iw = W - m.l - m.r;
     const ih = H - m.t - m.b;

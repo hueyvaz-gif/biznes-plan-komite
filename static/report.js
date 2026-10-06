@@ -526,7 +526,7 @@
   /**
    * Nəticə + səbəb, bir-iki cümlə. Hər say report.fixes-dən (siyahı ilə eyni mənbə), mövzular overview.top-dan.
    *   hazir        → "Plan təqdimata hazırdır." (+ dəqiqləşdirmə tövsiyəsi)
-   *   duzelis      → "Plan təqdimata 9 düzəlişdən sonra hazır olacaq. Ən vacibi: a, b və c."
+   *   duzelis      → "Təqdimatdan əvvəl 9 düzəlişi tamamlayın."
    *   hazir_deyil  → "Plan hazır deyil: 2 bloklayan problem var. Əvvəlcə: a və b."
    */
   function buildSentence(verdict, report, overview) {
@@ -543,9 +543,8 @@
       return 'Plan hazır deyil' + (k ? ': ' + k + ' bloklayan problem var. Əvvəlcə: ' + joinAz(blockers.slice(0, 3)) + '.'
         : '.' + (top.length ? ' Ən vacibi: ' + joinAz(top) + '.' : ''));
     }
-    const head = n ? 'Plan təqdimata ' + n + ' düzəlişdən sonra hazır olacaq.'
-      : 'Plan təqdimata ' + c + ' bənd dəqiqləşdiriləndən sonra hazır olacaq.';
-    return head + (top.length ? ' Ən vacibi: ' + joinAz(top) + '.' : '');
+    return n ? 'Təqdimatdan əvvəl ' + n + ' düzəlişi tamamlayın.'
+      : 'Təqdimatdan əvvəl ' + c + ' bəndi dəqiqləşdirin.';
   }
 
   const api = {

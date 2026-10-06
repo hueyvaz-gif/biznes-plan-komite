@@ -1,9 +1,9 @@
-/* Nəticə tabı (Faza 3): bir cümləlik nəticə → 3 göstərici → düzəliş planı (checklist) → ayrıca sənədlər
- * → maliyyə xülasəsi → "Yoxlama haqqında" (yığılı). Hər rəqəm API-dən (Report.buildReport / buildOverview);
+/* İcmal: nəticə, göstəricilər, ilk addımlar və problemli maliyyə bəndləri.
+ * Düzəlişlər: süzgəcli checklist, açılan mənbə izahları və ayrıca sənədlər. Hər rəqəm API-dən;
  * checklist işarəsi YALNIZ istifadəçinin lokal qeydidir (localStorage), statusu dəyişmir. */
-import { $, reqCounts } from '../core/dom.js';
+import { $ } from '../core/dom.js';
 import { state } from '../core/state.js';
-import { selectTab } from '../shell/tabs.js';
+import { selectTab, setTabCount } from '../shell/tabs.js';
 import { el } from '../ui/el.js';
 import { icon } from '../ui/icons.js';
 import { Badge, withPlaceholders } from '../ui/badge.js';
@@ -13,14 +13,14 @@ import { tooltip, toast } from '../ui/overlay.js';
 import { reducedMotion } from '../ui/motion.js';
 import { fmtMoney, fmtNumber, fmtPct, fmtYears, DASH } from '../format.js';
 import { setFinanceFilter, openFinanceRow } from './finance.js';
-import { setRequirementFilter } from './requirements.js';
+import { cashflowChart } from './cashflow-chart.js';
 
-const FIX_SHOW = 6;
 const SEV_TONE = { kritik: 'danger', duzelis: 'warning', deqiqlesdir: 'info' };
 const SEV_ICON = { kritik: 'alert', duzelis: 'dot', deqiqlesdir: 'info' };
 
 let ctx = null;            // {check, p, report, openSource}
 let econ = null;           // son iqtisadi məlumat (sənəd statusları üçün)
+let fixFilter = 'all';
 
 /* ── Rəqəm formatı (vahidə görə) ────────────────────────────────────────── */
 export function fmtCheckValue(value, check, decimals, signed = false) {
@@ -46,17 +46,61 @@ function writeDone(id, set) {
 export function renderSummaryPanel(check, p, report, overview, openSource) {
   ctx = { check, p, report, overview, openSource };
   $('sum-sentence').textContent = Report.buildSentence(check.verdict, report, overview);
+  $('sum-priorities').replaceChildren(...report.fixes.slice(0, 3).map((f) =>
+    el('button', { type: 'button', class: 'priority', on: { click: () => focusFix(f.anchor) } },
+      el('span', { class: `priority__mark priority__mark--${f.severity}`, 'aria-hidden': 'true' }, icon(f.severity === 'kritik' ? 'alert' : 'arrowRight', { size: 'sm' })),
+      el('span', { class: 'priority__body' }, el('span', { class: 'priority__topic', text: f.topic }),
+        el('span', { class: 'priority__action', text: f.action || f.missing })), icon('chevronRight', { size: 'sm' }))));
+  $('sum-priorities-sec').hidden = !report.fixes.length;
+  setTabCount('count-duzelis', report.fixes.length, { tone: 'warn', complete: true, title: report.fixes.length + ' görüləcək iş', doneTitle: 'Düzəliş tələb edən iş yoxdur' });
+  fixFilter = 'all';
   renderTiles(p, report);
+  renderDashboard(p.finance);
   renderFixPlan(check, report, overview);
   renderDocs(report);
   renderNotApplicable(report);
   renderFinSummary(check, p);
 }
 
+/** Overview uses the same verified values and residual components as the finance view. */
+function renderDashboard(finance) {
+  const checks = finance.checks || [];
+  const metrics = [['investisiya_cemi', 'İnvestisiya'], ['npv', 'Xalis cari dəyər · NPV'],
+    ['irr', 'Rentabellik · IRR'], ['pp', 'Özünü ödəmə']].map(([id, label]) => {
+    const check = checks.find((c) => c.id === id);
+    if (!check || (check.computed == null && check.claimed == null)) return null;
+    const value = check.computed ?? check.claimed;
+    const display = check.unit === 'manat' ? fmtMoney(value, { compact: true }) : fmtCheckValue(value, check, 1);
+    const status = Report.financeLabel(check);
+    return el('button', { type: 'button', class: 'metric', on: { click: () => openFinanceRow(id) } },
+      el('span', { class: 'metric__label', text: label }),
+      el('span', { class: 'metric__value', text: display }),
+      el('span', { class: 'metric__foot' },
+        Badge(status.label, { tone: status.tone, size: 'sm' }),
+        el('span', { class: 'metric__source', text: check.computed == null ? 'Planda' : 'Hesablanmış' })));
+  }).filter(Boolean);
+  $('sum-kpis').replaceChildren(...metrics);
+  $('sum-metrics-sec').hidden = !metrics.length;
+
+  const { fcff, cumulative } = finance.charts || {};
+  const available = fcff?.available && cumulative?.available && fcff.years?.length;
+  $('sum-chart-sec').hidden = !available;
+  $('sum-chart-host').replaceChildren();
+  if (!available) return;
+  const residualRow = finance.cashflow?.rows?.residual;
+  const residual = residualRow && residualRow.ok !== false
+    ? fcff.years.map((year) => { const i = residualRow.years.indexOf(year); return i >= 0 ? residualRow.values[i] || 0 : 0; }) : null;
+  const payback = checks.find((c) => c.id === 'pp')?.computed ?? null;
+  $('sum-chart-meta').textContent = `${fcff.years[0]}–${fcff.years.at(-1)} · manat · mənbə: ${fcff.source || 'planın pul axını cədvəli'}`;
+  $('sum-chart-host').append(cashflowChart({ years: fcff.years, fcff: fcff.values, cumulative: cumulative.values,
+    residual, ratePct: finance.claimed?.discount_rate_pct ?? null, payback, compact: true }).node);
+}
+
 /* ── 3 göstərici ────────────────────────────────────────────────────────── */
 function renderTiles(p, report) {
   const host = $('sum-tiles');
   const tiles = [];
+  const documentCount = (report.documents || []).length;
   const fin = Report.financeCounts(p.finance.checks || []);
   if (fin.total) {
     const sub = [fin.clarify && fin.clarify + ' dəqiqləşdirmə', fin.fail && fin.fail + ' uyğunsuz',
@@ -67,56 +111,54 @@ function renderTiles(p, report) {
       onClick: () => { selectTab('panel-maliyye', true); setFinanceFilter(fin.problems ? 'problem' : 'hamisi'); },
     }));
   }
-  const std = (p.compliance.items || []).filter((i) => (i.origin || 'standart') === 'standart');
-  if (std.length) {
-    const c = reqCounts(std);
-    // 11 qrup üzrə seqment: en — yoxlanılan tələb sayı, rəng — qrupun vəziyyəti.
-    const groups = new Map();
-    std.forEach((i) => { if (!groups.has(i.group_id)) groups.set(i.group_id, { title: i.group_title, items: [] }); groups.get(i.group_id).items.push(i); });
-    const segments = [...groups.values()].map((g) => {
-      const gc = reqCounts(g.items);
-      const tone = gc.missing ? 'danger' : gc.partial || gc.notChecked ? 'warning' : gc.evaluated ? 'success' : 'neutral';
-      return { value: Math.max(1, gc.evaluated), tone, label: `${g.title}: ${gc.answered}/${gc.evaluated}` };
-    });
-    const sub = [c.partial && c.partial + ' natamam', c.missing && c.missing + ' cavabsız', c.notApplicable && c.notApplicable + ' tətbiq edilmir',
-      c.notChecked && c.notChecked + ' yoxlanılmadı'].filter(Boolean).join(' · ') || 'hamısı cavablandırılıb';
-    tiles.push(StatTile({
-      label: 'Tələblər', value: c.answered, format: (v) => `${fmtNumber(Math.round(v))}/${c.evaluated}`, unit: 'tam', sub, segments,
-      onClick: () => { selectTab('panel-teleb', true); setRequirementFilter(c.partial + c.missing + c.notChecked ? 'problem' : 'hamisi'); },
-    }));
-  }
-  const holes = (p.ingest.placeholders || []).length;
-  const inside = report.fixes.filter((f) => f.kind !== 'bosyer').reduce((s, f) => s + f.holes.length, 0);
-  const apart = holes - inside;
   tiles.push(StatTile({
-    label: 'Boş yerlər', value: holes, unit: 'yer', tone: holes ? 'warning' : 'success',
-    sub: holes ? [inside && Report.poss(inside) + ' düzəlişlərin içində', apart && Report.poss(apart) + ' ayrıca kartda'].filter(Boolean).join(' · ')
-      : 'boş yer qalmayıb',
-    onClick: () => selectTab('panel-bosyer', true),
+    label: 'Görüləcək işlər', value: report.fixes.length, unit: 'iş',
+    sub: 'Birləşdirilmiş düzəliş siyahısı',
+    onClick: () => selectTab('panel-duzelis', true),
+  }));
+  tiles.push(StatTile({
+    label: 'Əlavə sənədlər', value: documentCount, unit: 'sənəd',
+    sub: documentCount ? 'Ayrıca təqdim edilməlidir' : 'Əlavə sənəd tələb olunmur',
+    onClick: documentCount ? () => { selectTab('panel-duzelis', true); $('docs-sec').scrollIntoView({ block: 'start' }); } : undefined,
   }));
   host.replaceChildren(...tiles);
 }
 
 /* ── Düzəliş planı ──────────────────────────────────────────────────────── */
 function renderFixPlan(check, report, overview) {
-  const fixes = report.fixes;
   const done = readDone(check.id);
+  const fixes = report.fixes.filter((f) => fixFilter === 'all' || (fixFilter === 'open' && !done.has(f.anchor))
+    || (fixFilter === 'holes' && (f.kind === 'bosyer' || f.holes.length > 0)));
   // Köhnə (artıq olmayan) işarələr atılır — sayğac həmişə cari siyahıya uyğundur.
-  for (const a of [...done]) if (!fixes.some((f) => f.anchor === a)) done.delete(a);
-  $('fix-sub').textContent = overview.composition || '';
-  $('fix-sub').hidden = !overview.composition;
-  $('fixes').replaceChildren(...fixes.slice(0, FIX_SHOW).map((f, i) => fixCard(f, i + 1, done)));
-  $('fixes-more').replaceChildren(...fixes.slice(FIX_SHOW).map((f, i) => fixCard(f, FIX_SHOW + i + 1, done)));
+  for (const a of [...done]) if (!report.fixes.some((f) => f.anchor === a)) done.delete(a);
+  $('fix-sub').textContent = 'İşarələr şəxsi qeyddir. Nəticə yeni versiya yoxlandıqda yenilənir.';
+  $('fix-composition').textContent = overview.composition || '';
+  $('fix-composition-box').hidden = !overview.composition;
+  document.querySelectorAll('[data-fix-filter]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.fixFilter === fixFilter));
+  });
+  const groups = [
+    ['critical', 'fixes-critical', (f) => f.severity === 'kritik'],
+    ['main', 'fixes', (f) => f.severity !== 'kritik' && f.severity !== 'deqiqlesdir'],
+    ['clarify', 'fixes-clarify', (f) => f.severity === 'deqiqlesdir'],
+  ];
+  for (const [key, host, matches] of groups) {
+    const items = fixes.filter(matches);
+    $('fixgroup-' + key).hidden = items.length === 0;
+    $('fixgroup-' + key + '-count').textContent = items.length + ' iş';
+    $(host).replaceChildren(...items.map((f) => fixCard(f, ctx.report.fixes.indexOf(f) + 1, done)));
+  }
+  $('fixes-more').replaceChildren();
   setFixesOpen(false);
   const empty = $('fixes-empty-host');
-  empty.replaceChildren(fixes.length ? '' : EmptyState({ icon: 'check', compact: true, title: 'Düzəliş tələb edən bənd tapılmadı',
-    text: 'Standart tələblər cavablandırılıb, maliyyə rəqəmləri uyğundur və sənəddə boş yer qalmayıb.' }));
-  $('fix-progress').hidden = fixes.length === 0;
-  updateProgress(check.id, fixes.length, done.size);
+  empty.replaceChildren(fixes.length ? '' : EmptyState({ icon: 'check', compact: true,
+    title: fixFilter === 'all' ? 'Düzəliş tələb edən bənd tapılmadı' : 'Bu filtrdə iş yoxdur' }));
+  $('fix-progress').hidden = report.fixes.length === 0;
+  updateProgress(check.id, report.fixes.length, done.size);
 }
 
 function updateProgress(id, total, n) {
-  $('fix-progress-text').textContent = `${n}/${total} işarələnib`;
+  $('fix-progress-text').textContent = `${n}/${total} iş tamamlandı kimi işarələnib`;
   $('fix-progress-bar').style.setProperty('--p', total ? String(n / total) : '0');
 }
 
@@ -131,18 +173,26 @@ function fixCard(f, no, done) {
     writeDone(ctx.check.id, set);
     card.classList.toggle('is-done', cb.checked);
     updateProgress(ctx.check.id, ctx.report.fixes.length, set.size);
+    if (fixFilter === 'open') {
+      renderFixPlan(ctx.check, ctx.report, ctx.overview);
+      document.querySelector('[data-fix-filter="open"]').focus();
+    }
   });
 
   const codes = (f.codes || []).map((c) => tooltip(el('span', { class: 'fixc__code', text: c.code, 'aria-label': 'Tələb ' + c.code + ': ' + c.title }), c.title));
   const where = f.ref ? el('button', { type: 'button', class: 'fixc__where', on: { click: (e) => ctx.openSource(f.ref, e.currentTarget) } },
-    icon('locate', { size: 'sm' }), el('span', { text: 'Sənəddə yeri' })) : null;
+    icon('locate', { size: 'sm' }), el('span', { text: 'Sənəddə göstər' })) : null;
   const head = el('div', { class: 'fixc__head' },
     Badge(Report.SEVERITY_LABEL[f.severity] || f.severity, { tone: SEV_TONE[f.severity] || 'neutral', icon: SEV_ICON[f.severity], size: 'sm' }),
-    el('h3', { class: 'fixc__topic' }, el('label', { for: cbId, text: f.topic })), ...codes, where);
+    el('h3', { class: 'fixc__topic' }, el('label', { for: cbId, text: f.topic })), where);
 
   const col = (label, value) => (value ? el('div', { class: 'fixc__col' }, el('h4', { class: 'fixc__label', text: label }),
     el('p', { class: 'fixc__text' }, typeof value === 'string' ? withPlaceholders(value) : value)) : null);
-  const cols = el('div', { class: 'fixc__cols' }, col('Nə çatışmır', f.missing), col('Nə etmək lazımdır', f.action));
+  const action = el('p', { class: 'fixc__action' }, withPlaceholders(f.action || f.missing || 'Ətraflı məlumatı yoxlayın.'));
+  const detail = el('details', { class: 'fixc__detail' },
+    el('summary', { text: 'Ətraflı' }),
+    el('div', { class: 'fixc__detail-body' }, col('Yoxlamanın qeydi', f.missing),
+      codes.length ? el('div', { class: 'fixc__codes' }, ...codes) : null));
 
   const extra = [];
   if (f.location) extra.push(el('p', { class: 'fixc__loc' }, icon('fileText', { size: 'sm' }), el('span', { text: f.location })));
@@ -152,10 +202,11 @@ function fixCard(f, no, done) {
       r.ref ? el('button', { type: 'button', class: 'fixc__inline', text: 'yerinə bax', 'aria-label': 'Yerinə bax: ' + r.text,
         on: { click: (e) => ctx.openSource(r.ref, e.currentTarget) } }) : null))));
   }
+  detail.querySelector('.fixc__detail-body').append(...extra);
   card.append(
     el('div', { class: 'fixc__check' }, cb, el('span', { class: 'fixc__no', 'aria-hidden': 'true', text: String(no) }),
-      el('span', { class: 'sr-only', text: 'Düzəldildi kimi işarələ' })),
-    el('div', { class: 'fixc__main' }, head, cols, ...extra));
+      el('span', { class: 'sr-only', text: 'Tamamlandı kimi işarələ' })),
+    el('div', { class: 'fixc__main' }, head, action, detail));
   return card;
 }
 
@@ -174,6 +225,8 @@ export function setFixesOpen(open) {
 
 /** Nəticə cümləsindən və palette-dən: kart gizli hissədədirsə açılır, sonra fokus. */
 export function focusFix(anchor) {
+  if (ctx && fixFilter !== 'all') { fixFilter = 'all'; renderFixPlan(ctx.check, ctx.report, ctx.overview); }
+  selectTab('panel-duzelis', true);
   const card = document.getElementById(anchor);
   if (!card) return;
   if (card.parentElement && card.parentElement.id === 'fixes-more') setFixesOpen(true);
@@ -230,7 +283,7 @@ function renderDocs(report) {
       el('div', { class: 'docitem__main' },
         el('p', { class: 'docitem__title' }, el('span', { text: d.text }), el('span', { class: 'fixc__code', text: d.code })),
         el('p', { class: `docitem__status tone-${st.tone === 'success' ? 'positive' : st.tone === 'warning' ? 'negative' : 'neutral'}`, 'aria-live': 'polite', text: st.text }),
-        canUpload && !found.length ? el('p', { class: 'docitem__hint', text: 'Faylı bura sürükləyin və ya “Yüklə” düyməsini basın (XLSX, PDF, DOCX, JPG, PNG).' }) : null),
+        canUpload && !found.length ? el('p', { class: 'docitem__hint', text: 'Excel, PDF, DOCX və ya şəkil' }) : null),
       canUpload ? el('button', { type: 'button', class: 'btn btn--small', on: { click: () => input.click() } },
         icon('upload', { size: 'sm' }), found.length ? 'Yenidən yüklə' : 'Yüklə') : null,
       input);
@@ -249,14 +302,11 @@ function renderNotApplicable(report) {
 /* ── Maliyyə xülasəsi ───────────────────────────────────────────────────── */
 const FIN_TONE = { ok: 'success', warn: 'warning', fail: 'danger', skip: 'neutral' };
 function renderFinSummary(check, p) {
-  const rows = Report.financeRows(check.result || {});
+  const rows = Report.financeRows(check.result || {}).filter((r) => r.status !== 'ok' || r.label === 'Dəqiqləşdirmə');
   const checks = p.finance.checks || [];
   const host = $('finsum-host');
-  if (!rows.length) {
-    host.replaceChildren(EmptyState({ icon: 'info', compact: true, title: 'Maliyyə yoxlaması aparılmayıb',
-      text: 'Planda yenidən hesablanacaq maliyyə cədvəli tapılmadı.' }));
-    return;
-  }
+  $('finsum-sec').hidden = !rows.length;
+  if (!rows.length) { host.replaceChildren(); return; }
   const decimals = (c) => {
     const field = { irr: 'irr_pct', pp: 'payback_years' }[c.id];
     const src = field && ((p.finance.claimed || {}).provenance || {})[field];
@@ -284,6 +334,10 @@ const formulaRow = (r) => r.claimed == null && r.computed == null && r.status ==
 
 /* ── Bir dəfəlik qoşulma ────────────────────────────────────────────────── */
 export function wireSummary() {
+  document.querySelectorAll('[data-fix-filter]').forEach((b) => b.addEventListener('click', () => {
+    fixFilter = b.dataset.fixFilter;
+    if (ctx) renderFixPlan(ctx.check, ctx.report, ctx.overview);
+  }));
   $('fixes-toggle')?.addEventListener('click', () => setFixesOpen($('fixes-toggle').getAttribute('aria-expanded') !== 'true'));
   const toggle = $('about-toggle');
   const setAbout = (open) => {
@@ -298,7 +352,12 @@ export function wireSummary() {
     $('about').scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
     toggle.focus({ preventScroll: true });
   });
-  window.addEventListener('beforeprint', () => setAbout(true));
+  window.addEventListener('beforeprint', () => {
+    setAbout(true);
+    if (ctx) { fixFilter = 'all'; renderFixPlan(ctx.check, ctx.report, ctx.overview); setFixesOpen(true); }
+    document.querySelectorAll('.fixc__detail').forEach((d) => { d.dataset.printOpen = String(d.open); d.open = true; });
+  });
+  window.addEventListener('afterprint', () => document.querySelectorAll('.fixc__detail').forEach((d) => { d.open = d.dataset.printOpen === 'true'; }));
   document.addEventListener('econ:data', (e) => {
     econ = e.detail;
     if (ctx && ctx.report) renderDocs(ctx.report);

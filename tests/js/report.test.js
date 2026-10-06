@@ -188,14 +188,14 @@ test('buildSentence: nəticə + səbəb, saylar düzəliş siyahısından', () =
     fx('duzelis', 'VÖEN və ünvan'), fx('deqiqlesdir', 'Mənbələrin cəmi')] };
   const overview = { top: report.fixes.slice(0, 3).map((f) => ({ topic: f.topic })) };
   assert.equal(R.buildSentence('duzelis', report, overview),
-    'Plan təqdimata 3 düzəlişdən sonra hazır olacaq. Ən vacibi: şirkətin rekvizitləri; avadanlıq və təchizatçılar; VÖEN və ünvan.');
+    'Təqdimatdan əvvəl 3 düzəlişi tamamlayın.');
   assert.equal(R.buildSentence('hazir', { fixes: [] }, { top: [] }), 'Plan təqdimata hazırdır.');
   assert.equal(R.buildSentence('hazir', { fixes: [fx('deqiqlesdir', 'x')] }, { top: [] }),
     'Plan təqdimata hazırdır. 1 bəndin dəqiqləşdirilməsi tövsiyə olunur.');
   assert.equal(R.buildSentence('hazir_deyil', { fixes: [fx('kritik', 'Maliyyələşmə mənbələri'), fx('duzelis', 'b')] }, { top: [] }),
     'Plan hazır deyil: 1 bloklayan problem var. Əvvəlcə: maliyyələşmə mənbələri.');
   assert.equal(R.buildSentence('duzelis', { fixes: [fx('deqiqlesdir', 'Mənbələr')] }, { top: [{ topic: 'Mənbələr' }] }),
-    'Plan təqdimata 1 bənd dəqiqləşdiriləndən sonra hazır olacaq. Ən vacibi: mənbələr.');
+    'Təqdimatdan əvvəl 1 bəndi dəqiqləşdirin.');
 });
 
 test('joinAz', () => {

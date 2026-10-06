@@ -45,21 +45,28 @@
   --dur-1: 120ms; --dur-2: 200ms; --dur-3: 320ms; --dur-4: 600ms;
 
   /* ── Ölçülər ──────────────────────────────────────────────────────────── */
-  --sidebar: 276px;
+  --sidebar: 244px;
+  --navigation-bg: #ffffff;
+  --navigation-surface: #f8fafb;
+  --navigation-selected: #eaf2ee;
+  --navigation-ink: #15201c;
+  --navigation-muted: #53645c;
+  --navigation-line: #e2e8ec;
+  --navigation-accent: #0f4c3a;
   --fab-size: 52px;
   --control-h: 40px;
 
   /* ── Rənglər: açıq tema ───────────────────────────────────────────────── */
-  --bg: #f5f4f0;
+  --bg: #f4f6f8;
   --surface: #ffffff;
-  --surface-2: #f8f7f4;
-  --surface-3: #eceae4;
+  --surface-2: #f8fafb;
+  --surface-3: #e9eef1;
   --side-bg: #fbfaf7;
   --ink: #15201c;
   --ink-soft: #4b5652;
   --ink-faint: #5d6763;
-  --line: #e5e3dd;
-  --line-strong: #d0cdc5;
+  --line: #e2e8ec;
+  --line-strong: #cbd5db;
 
   --accent: #0f4c3a;
   --accent-2: #1d7356;             /* qradiyentin açıq ucu */

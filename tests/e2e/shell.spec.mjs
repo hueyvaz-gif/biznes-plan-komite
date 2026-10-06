@@ -20,7 +20,14 @@ async function open(page, tab, extra) {
   return problems;
 }
 
-const TABS = ['xulase', 'maliyye', 'iqtisadi', 'teleb', 'bosyer', 'suallar', 'elave', 'muqayise'];
+const TABS = ['xulase', 'duzelis', 'maliyye', 'iqtisadi', 'teleb', 'bosyer', 'suallar', 'elave', 'muqayise'];
+async function chooseTab(page, id, name) {
+  if (await page.locator('#tab-' + id).isVisible()) await page.locator('#tab-' + id).click();
+  else {
+    await page.locator('#tabs-more').click();
+    await page.locator('#tabs-menu').getByRole('menuitemradio', { name: new RegExp('^' + name) }).click();
+  }
+}
 for (const tab of TABS) {
   test(`?tab=${tab} açılır, konsol təmizdir`, async ({ page }) => {
     const problems = await open(page, tab);
@@ -51,6 +58,7 @@ test('hero: rəqəmlər API-dən; bloklar müvafiq taba aparır', async ({ page,
   await expect(page.locator('#hero-risk-level')).toHaveText(econ.result.risk.label.toLocaleUpperCase('az'));
   await page.locator('[data-hero-goto="panel-iqtisadi"]').click();
   await expect(page).toHaveURL(/tab=iqtisadi/);
+  await page.locator('#tab-xulase').click();
   await page.locator('[data-hero-goto="panel-teleb"]').click();
   await expect(page).toHaveURL(/tab=teleb/);
 });
@@ -61,7 +69,7 @@ test('tab nişanı ilə panel daxilindəki say eynidir (Maliyyə, Boş yerlər)'
   const chip = await page.locator('[data-fin="problem"] .count, [data-fin="problem"] span').last().textContent().catch(() => null);
   if (chip !== null) expect(chip.trim()).toBe(fin.trim());
   const holes = await page.locator('#count-bosyer').textContent();
-  await page.locator('#tab-bosyer').click();
+  await chooseTab(page, 'bosyer', 'Boş yerlər');
   await expect(page.locator('#ph-list .phcard')).toHaveCount(Number(holes));
 });
 
@@ -78,11 +86,12 @@ test('Ctrl+K → "TS2" → Enter: Tələblər tabı, TS2 sətri fokusda və vur�
   await expect(row).toHaveClass(/is-flash/);
 });
 
-test('qısayollar: 1–6, g n, ?; yazı sahəsində işləmir', async ({ page }) => {
+test('qısayollar: 1–5, g n, ?; yazı sahəsində işləmir', async ({ page }) => {
   await open(page, 'xulase');
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.keyboard.press('4');
-  await expect(page).toHaveURL(/tab=teleb/);
+  await expect(page).toHaveURL(/tab=iqtisadi/);
+  await chooseTab(page, 'teleb', 'Standart tələblər');
   await page.locator('#req-search').fill('');
   await page.locator('#req-search').press('2');
   await expect(page).toHaveURL(/tab=teleb/);                     // input-da "2" yazılır, tab dəyişmir
@@ -113,7 +122,7 @@ test('scroll → kompakt zolaq; CLS < 0,05 (yükləmə, scroll, tab keçidi)', a
   for (let i = 0; i < 12; i++) { await page.mouse.wheel(0, 120); await page.waitForTimeout(30); }
   await expect(page.locator('#view-results')).toHaveClass(/is-compact/);
   await expect(page.locator('#herobar')).toBeInViewport();
-  for (const t of ['tab-teleb', 'tab-bosyer', 'tab-xulase']) await page.locator('#' + t).click();
+  for (const t of ['tab-duzelis', 'tab-suallar', 'tab-maliyye']) await page.locator('#' + t).click();
   expect(await page.evaluate(() => window.__cls)).toBeLessThan(0.05);
 });
 
@@ -131,7 +140,7 @@ test('rail (974px): ikon zolağı, "Planlar" paneli açır, Esc bağlayır', asy
 test('375px: üfüqi scroll yoxdur, bütün əsas tablara keçmək olur', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   await open(page, 'xulase');
-  for (const t of ['maliyye', 'iqtisadi', 'teleb', 'bosyer', 'suallar']) {
+  for (const t of ['duzelis', 'maliyye', 'iqtisadi', 'suallar']) {
     await page.locator('#tab-' + t).click();
     await expect(page).toHaveURL(new RegExp('tab=' + t));
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
