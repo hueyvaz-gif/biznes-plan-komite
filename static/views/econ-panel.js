@@ -479,7 +479,9 @@ function renderReality(d) {
     DataTable({ dense: true, caption: 'Mənbəyi gözlənilən göstəricilər', rows: waiting.map((f) => ({ ...f })),
       columns: [{ key: 'title', label: 'Göstərici' },
         { key: 'plan', label: 'Planda', type: 'number', render: (f) => { const p = planOf(f); return p ? numberText(p) : DASH; } },
-        { key: 'src', label: 'Mənbə', render: () => el('span', { class: 'efc__src', text: 'Gözlənilir' }) }] })));
+        { key: 'src', label: 'Mənbə', render: () => el('span', { class: 'efc__src', text: 'Gözlənilir' }) }] })),
+    el('p', { class: 'rbars__admin' }, icon('info', { size: 'sm' }), el('span', null, 'Admin üçün: ', el('code', { text: 'config/benchmarks/gubre.yaml' }),
+      ' faylında hər göstəricinin min/max, mənbə və tarix sahələrini doldurun.')));
   }
   host.replaceChildren(...parts);
 }
