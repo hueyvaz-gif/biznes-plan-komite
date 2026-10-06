@@ -2,7 +2,7 @@
 import { api } from '../core/api.js';
 import { $, announce, badge, el, formatAz, formatDate, icon } from '../core/dom.js';
 import { state } from '../core/state.js';
-import { layoutTabs, selectTab } from '../shell/tabs.js';
+import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
 
 (function () {
   'use strict';
@@ -91,6 +91,8 @@ import { layoutTabs, selectTab } from '../shell/tabs.js';
 
   function render() {
     const d = E.data;
+    // Hero (shell/hero.js) və digər dinləyicilər üçün: iqtisadi məlumat yeniləndi.
+    document.dispatchEvent(new CustomEvent('econ:data', { detail: d }));
     renderSummaryLine(d);
     renderTabCounts(d);
     renderHead(d);
@@ -124,16 +126,12 @@ import { layoutTabs, selectTab } from '../shell/tabs.js';
 
   function renderTabCounts(d) {
     const { flags, open } = C.tabCounts(d);
-    const set = (id, n, title) => {
-      const b = $(id);
-      if (!b) return;
-      b.textContent = n ? String(n) : '';
-      b.classList.remove('is-zero');
-      b.title = n ? title : '';
-      b.parentElement.title = b.title;
-    };
-    set('count-iqtisadi', flags, flags + ' bayraqlanan tapıntı');
-    set('count-suallar', open, open + ' açıq sual');
+    const done = !!(d && d.result);
+    const level = done && d.result.risk ? d.result.risk.level : null;
+    setTabCount('count-iqtisadi', flags, { tone: level === 'yuksek' ? 'fail' : 'warn', title: flags + ' tapıntı diqqət tələb edir',
+      complete: done, doneTitle: 'Diqqət tələb edən tapıntı yoxdur' });
+    setTabCount('count-suallar', open, { tone: 'warn', title: open + ' açıq sual', complete: done && (d.questions || []).length > 0,
+      doneTitle: 'Bütün suallar bağlanıb' });
     if (typeof layoutTabs === 'function') layoutTabs();
   }
 

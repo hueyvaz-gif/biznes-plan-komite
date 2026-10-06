@@ -1,6 +1,6 @@
 // CSS dizayn sistemi auditi: tokenlərdən kənar dəyərləri sayır, hədəf aşılarsa exit 1 (CI üçün).
 //
-//   node scripts/css-audit.mjs            — static/*.css (tokens.css xaric) və static/ui/*.css
+//   node scripts/css-audit.mjs            — static/ altındakı bütün .css (tokens.css xaric)
 //   node scripts/css-audit.mjs --verbose  — hər pozuntunu sətri ilə göstərir
 //
 // Qaydalar (tokens.css-dəki şkalalar):
@@ -10,17 +10,17 @@
 //   z-index        — yalnız var(--z-*) (calc daxilində də), 0, auto
 //   rəng           — hex / rgb() / hsl() literal yoxdur (mask-image istisna: alfa maskasıdır, rəng deyil)
 //   !important     — @media print xaricində yalnız [hidden], .sr-only və reduced-motion qaydalarında
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../static/', import.meta.url));
 const VERBOSE = process.argv.includes('--verbose');
 
-const files = [
-  ...readdirSync(ROOT).filter((f) => f.endsWith('.css') && f !== 'tokens.css').map((f) => join(ROOT, f)),
-  ...(existsSync(join(ROOT, 'ui')) ? readdirSync(join(ROOT, 'ui')).filter((f) => f.endsWith('.css')).map((f) => join(ROOT, 'ui', f)) : []),
-];
+const files = readdirSync(ROOT, { recursive: true })
+  .map((f) => String(f).replaceAll('\\', '/'))
+  .filter((f) => f.endsWith('.css') && f !== 'tokens.css')
+  .map((f) => join(ROOT, f));
 
 /** Şərhləri sətir sayını saxlayaraq silir. */
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));

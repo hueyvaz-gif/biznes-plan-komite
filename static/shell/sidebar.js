@@ -5,6 +5,8 @@ import { VERDICT_TONE } from '../core/labels.js';
 import { openCheck } from '../core/router.js';
 import { state } from '../core/state.js';
 import { resetToUpload } from './session.js';
+import { tooltip } from '../ui/overlay.js';
+import { fmtRelative } from '../format.js';
 import { fillPlanSelect, setPlanMode } from '../views/upload-flow.js';
 
 /* ── Tarixçə (sol naviqasiya) ───────────────────────────────────────────── */
@@ -62,33 +64,41 @@ function planItem(plan) {
   head.type = 'button';
   head.setAttribute('aria-expanded', 'false');
   const st = statusOf(plan);
-  head.title = planName(plan) + ' — ' + st.label + ' · ' + formatAz(plan.versions) + ' versiya · ' + formatDate(plan.last_at);
-  head.append(...statusDot(plan), el('span', 'plan__name', planName(plan)),
-    el('span', 'plan__count', 'v' + plan.versions),
+  const when = fmtRelative(plan.last_at);
+  const text = el('span', 'plan__text');
+  text.append(el('span', 'plan__name', planName(plan)), el('span', 'plan__when', when));
+  head.append(...statusDot(plan), text, el('span', 'plan__count', 'v' + plan.versions),
     el('span', 'sr-only', ', ' + formatAz(plan.versions) + ' versiya, son: ' + formatDate(plan.last_at)));
-  const panel = el('div');
+  // Nöqtənin mənası: status + son yoxlama (hover və fokusda).
+  tooltip(head, () => st.label + ' · ' + formatAz(plan.versions) + ' versiya · son yoxlama ' + when);
+  const panel = el('div', 'plan__panel');
   panel.hidden = true;
   const versions = el('ol', 'versions');
-  const newVersion = el('button', 'btn btn--small newversion', 'Yeni versiya yüklə');
-  newVersion.type = 'button';
-  newVersion.addEventListener('click', () => {
+  panel.append(versions);
+  // Hover/fokusda görünən əməliyyatlar (başlıq düyməsinin içində deyil — iç-içə interaktiv element olmasın).
+  const actions = el('div', 'plan__actions');
+  const again = el('button', 'plan__act');
+  again.type = 'button';
+  again.append(icon('upload'));
+  again.setAttribute('aria-label', '“' + planName(plan) + '” — yeni versiya ilə yenidən yoxla');
+  tooltip(again, 'Yeni versiya ilə yenidən yoxla');
+  again.addEventListener('click', () => {
     resetToUpload();
     setPlanMode('existing', plan.plan_id);
     $('dropzone').focus();
   });
-  const actions = el('div', 'plan__actions');
-  actions.append(newVersion);
+  actions.append(again);
   if (!state.demo) {
-    const remove = el('button', 'btn btn--small btn--danger plan__delete');
+    const remove = el('button', 'plan__act plan__act--danger plan__delete');
     remove.type = 'button';
-    remove.append(icon('trash'), el('span', null, 'Planı sil'));
+    remove.append(icon('trash'));
     remove.setAttribute('aria-label', '“' + planName(plan) + '” planını sil');
+    tooltip(remove, 'Planı sil');
     remove.addEventListener('click', () => askDeletePlan(plan, remove));
     actions.append(remove);
   }
-  panel.append(versions, actions);
   head.addEventListener('click', () => togglePlan(head, panel, versions, plan.plan_id));
-  item.append(head, panel);
+  item.append(head, actions, panel);
   return item;
 }
 /** "Planı sil": təsdiq pəncərəsi → DELETE /api/plans/{id}. Fokus "Ləğv et"-də başlayır (təhlükəsiz seçim). */
@@ -142,7 +152,7 @@ async function loadVersions(planId, host) {
       button.type = 'button';
       button.dataset.check = c.id;
       button.title = c.file_name + ' — ' + statusOf(c).label;
-      button.append(el('span', 'version__no', 'v' + c.version), el('span', 'version__date', formatDate(c.created_at)),
+      button.append(el('span', 'version__no', 'v' + c.version), el('span', 'version__date', fmtRelative(c.created_at)),
         ...statusDot(c));
       button.addEventListener('click', () => openCheck(c.id));
       li.append(button);
@@ -167,7 +177,7 @@ function markCurrentVersion(check) {
   if (item && !item.dataset.autoOpened) {
     item.dataset.autoOpened = '1';
     const head = item.querySelector('.plan__head');
-    const panel = head.nextElementSibling;
+    const panel = item.querySelector('.plan__panel');
     togglePlan(head, panel, panel.querySelector('.versions'), check.plan_id, true);
   }
 }

@@ -94,6 +94,7 @@ function requirementRow(item) {
   const meta = reqMeta(item);
   const row = el('li', 'req');
   row.tabIndex = 0;
+  row.dataset.code = item.req_id;                  // command palette (Ctrl+K) hədəfi
   const text = el('span', 'req__text');
   text.append(document.createTextNode(item.text));
   if (item.missing) {

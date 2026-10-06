@@ -1,9 +1,10 @@
 /* Nəticə tabı: qısa nəticə, düzəliş siyahısı, tələblər xəritəsi, maliyyə zolağı. */
-import { $, badge, el, formatAz, formatDate, formatValue, icon, planName, reqCounts, reqSummary, setHidden, setText, writtenDecimals } from '../core/dom.js';
+import { $, badge, el, formatAz, formatValue, icon, planName, reqCounts, reqSummary, setHidden, setText, writtenDecimals } from '../core/dom.js';
 import { VERDICT_TONE } from '../core/labels.js';
 import { state } from '../core/state.js';
 import { closeDetail } from '../shell/detail.js';
-import { layoutTabs, selectTab } from '../shell/tabs.js';
+import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
+import { renderHero } from '../shell/hero.js';
 import { renderComparison } from './compare.js';
 import { AG, loadEvents, renderAgents } from './debug-log.js';
 import { renderExtraResults } from './extras.js';
@@ -37,9 +38,8 @@ function renderResults(check) {
     try { fn(); } catch (err) { console.error('Nəticə bloku göstərilmədi (' + name + '):', err); }
   };
   safely('status', () => renderStatusLine(check));
-  const head = $('reshead');
-  if (head) head.dataset.tone = VERDICT_TONE[check.verdict] || 'skip';
   safely('nəticə', () => renderReport(check, p));
+  safely('hero', () => renderHero(check, state.overview));
   safely('xəritə', () => renderMaps(p));
   safely('əhatə', () => renderScope(p));
   safely('maliyyə', () => renderFinance(p.finance));
@@ -66,7 +66,6 @@ function renderStatusLine(check) {
   if (pill) pill.className = 'statuspill statuspill--' + tone;
   setText('res-status-label', check.verdict_label
     || ((state.meta && state.meta.verdicts) || {})[check.verdict] || 'Tamamlandı');
-  setText('res-runstate', 'Yoxlama tamamlandı · ' + formatDate(check.created_at));
 }
 function reportFormat() {
   return {
@@ -81,6 +80,7 @@ function renderReport(check, p) {
 
   // Nəticə bloku — başlıq, bloklayan problem, göstəricilər; hamısı aşağıdakı siyahı ilə eyni mənbədən.
   const overview = Report.buildOverview(check, check.result || {}, report, $('res-status-label').textContent);
+  state.overview = overview;
   renderOverview(overview);
   // Statusun yenidən hesablanması daxili tarixçədir — "Yoxlama haqqında" bölməsində göstərilir.
   const rules = (check.result || {}).rules || {};
@@ -405,25 +405,25 @@ function renderTabCounts(p) {
   const checks = p.finance.checks || [];
   const items = p.compliance.items || [];
   // Nişan problem sayıdır; mənası tooltip-də (nəticə blokundakı göstəricilərlə eyni qayda).
-  const badge = (id, n, hint, zeroHint) => {
-    const b = $(id);
-    b.textContent = n ? String(n) : zeroHint ? '0' : '';
-    b.classList.toggle('is-zero', !n);
-    b.title = n ? hint : zeroHint || '';
-    b.parentElement.title = b.title;
-  };
   const fin = Report.financeCounts(checks);
-  badge('count-maliyye', fin.problems, [fin.clarify && fin.clarify + ' dəqiqləşdirmə', fin.fail && fin.fail + ' uyğunsuz',
-    fin.warn && fin.warn + ' kiçik fərq', fin.skip && fin.skip + ' yoxlanılmadı'].filter(Boolean).join(', '));
+  setTabCount('count-maliyye', fin.problems, {
+    tone: fin.fail ? 'fail' : 'warn', complete: fin.total > 0, doneTitle: 'Bütün maliyyə yoxlamaları uyğundur',
+    title: [fin.clarify && fin.clarify + ' dəqiqləşdirmə', fin.fail && fin.fail + ' uyğunsuz',
+      fin.warn && fin.warn + ' kiçik fərq', fin.skip && fin.skip + ' yoxlanılmadı'].filter(Boolean).join(', '),
+  });
   const problemText = (c) => [c.partial && c.partial + ' natamam', c.missing && c.missing + ' cavabsız',
     c.notChecked && c.notChecked + ' yoxlanılmadı'].filter(Boolean).join(', ') + ' tələb';
   const std = reqCounts(items.filter((i) => (i.origin || 'standart') === 'standart'));
-  badge('count-teleb', std.partial + std.missing + std.notChecked, problemText(std));
+  setTabCount('count-teleb', std.partial + std.missing + std.notChecked, {
+    tone: std.missing ? 'fail' : 'warn', title: problemText(std), complete: std.total > 0, doneTitle: 'Bütün tələblər cavablandırılıb',
+  });
   const ex = reqCounts(items.filter((i) => i.origin === 'elave'));
-  badge('count-elave', ex.partial + ex.missing + ex.notChecked,
-    ex.total ? problemText(ex) : '', ex.total ? 'Əlavə tələblərdə problem yoxdur' : 'Əlavə tələb yoxdur');
+  setTabCount('count-elave', ex.partial + ex.missing + ex.notChecked, {
+    tone: ex.missing ? 'fail' : 'warn', title: ex.total ? problemText(ex) : '', complete: ex.total > 0,
+    doneTitle: 'Əlavə tələblərdə problem yoxdur',
+  });
   const holes = (p.ingest.placeholders || []).length;
-  badge('count-bosyer', holes, holes + ' doldurulmamış yer');
+  setTabCount('count-bosyer', holes, { tone: 'warn', title: holes + ' doldurulmamış yer', complete: true, doneTitle: 'Boş yer qalmayıb' });
   layoutTabs();                                      // nişan dəyişdi — zolaq yenidən yerləşir
 }
 

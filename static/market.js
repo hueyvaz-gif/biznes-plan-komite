@@ -241,10 +241,29 @@
     });
   }
 
-  async function refresh() {
+  /* Brauzer keşi (1 saat): /api/market bir neçə saniyə çəkir — açılışda yalnız keşdən göstərilir.
+   * localStorage əlçatmazdırsa (gizli rejim) sadəcə şəbəkədən oxunur. */
+  const CACHE_KEY = 'market-cache-v1';
+  const CACHE_MS = 60 * 60 * 1000;
+  function readCache() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      return c && Date.now() - c.t < CACHE_MS ? c.data : null;
+    } catch (_) { return null; }
+  }
+  function writeCache(data) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data })); } catch (_) { /* yer yoxdur */ }
+  }
+
+  async function refresh(force) {
     if (!deps) return;
     try {
-      render(deps.demo() ? SAMPLE : await deps.get('/api/market'));
+      if (deps.demo()) { render(SAMPLE); return; }
+      const cached = force ? null : readCache();
+      if (cached) { render(cached); return; }
+      const data = await deps.get('/api/market');
+      writeCache(data);
+      render(data);
     } catch (_) {
       // Bazar bloku köməkçidir — xətası sənəd yoxlamasına təsir etmir.
       render({ fx: { status: 'unavailable' }, assets: [], news: { status: 'unavailable' } });
@@ -256,9 +275,18 @@
     last = {};
     firstPaint = true;
     wireTabs();
-    refresh();
     clearInterval(timer);
-    timer = setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+    // Lazy: vidcet yığılıdır — məlumat yalnız ilk açılanda yüklənir, yeniləmə yalnız açıq olanda işləyir.
+    const box = document.getElementById('market-box');
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      refresh();
+      timer = setInterval(() => { if (!document.hidden && (!box || box.open)) refresh(true); }, REFRESH_MS);
+    };
+    if (!box || box.open) start();
+    else box.addEventListener('toggle', () => { if (box.open) start(); });
   }
 
   root.Market = { init, refresh, render };

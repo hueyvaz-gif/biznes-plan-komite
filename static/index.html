@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="/static/tokens.css">
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/ui/ui.css">
+  <link rel="stylesheet" href="/static/shell/shell.css">
 </head>
 <body>
 <a class="skip-link" href="#main">Əsas məzmuna keç</a>
@@ -36,25 +37,23 @@
     <nav class="nav" aria-labelledby="nav-label">
       <p class="nav__label" id="nav-label">İş sahəsi</p>
       <button class="navitem is-here" type="button" id="nav-new">
-        <span class="icon" data-icon="filePlus" aria-hidden="true"></span>Yeni yoxlama
+        <span class="icon" data-icon="filePlus" aria-hidden="true"></span><span class="navitem__text">Yeni yoxlama</span>
       </button>
       <button class="navitem" type="button" id="nav-history" aria-expanded="true" aria-controls="history-box">
-        <span class="icon" data-icon="fileText" aria-hidden="true"></span>Planlar və versiyalar
+        <span class="icon" data-icon="fileText" aria-hidden="true"></span><span class="navitem__text">Planlar və versiyalar</span>
         <span class="navitem__count" id="history-count"></span>
         <span class="icon navitem__chev" data-icon="chevronDown" aria-hidden="true"></span>
       </button>
     </nav>
 
     <!-- Seçilmiş plan: vizual olaraq siyahıda vurğulanır; ekran oxuyucu üçün ayrıca. -->
-    <section class="sr-only" id="nav-current" hidden aria-labelledby="nav-current-title">
-      <h2 id="nav-current-title">Seçilmiş plan</h2>
+    <section class="sr-only" id="nav-current" hidden aria-label="Seçilmiş plan">
       <p id="nav-current-name"></p>
       <p id="nav-current-meta"></p>
       <p id="nav-current-status"></p>
     </section>
 
-    <section class="plans" id="history-box" aria-labelledby="history-title">
-      <h2 class="sr-only" id="history-title">Planlar və versiyalar</h2>
+    <section class="plans" id="history-box" aria-label="Planlar və versiyalar">
       <ul class="history" id="history" aria-busy="true"></ul>
       <p class="plans__empty" id="history-empty" hidden></p>
     </section>
@@ -63,7 +62,7 @@
     <section class="market" id="market" aria-labelledby="market-title" aria-busy="true">
       <details class="market__box" id="market-box">
       <summary class="market__head">
-        <h2 class="market__title" id="market-title">Bazar icmalı</h2>
+        <span class="market__title" id="market-title">Bazar icmalı</span>
         <span class="tag tag--sage" id="market-tag" hidden>Nümunə</span>
         <span class="icon market__chev" data-icon="chevronDown" aria-hidden="true"></span>
       </summary>
@@ -90,7 +89,7 @@
 
     <footer class="sbfoot">
       <button class="navitem navitem--help" type="button" id="nav-help">
-        <span class="icon" data-icon="help" aria-hidden="true"></span>Kömək mərkəzi
+        <span class="icon" data-icon="help" aria-hidden="true"></span><span class="navitem__text">Kömək mərkəzi</span>
       </button>
       <p class="sidebar__foot">Status sənədin tamlığına aiddir — investisiya qərarı deyil.</p>
       <div class="sbfoot__theme" id="theme-switch"></div>
@@ -111,6 +110,10 @@
         <span class="topbar__title" id="topbar-title" aria-current="page">Yeni yoxlama</span>
       </nav>
       <p class="net" id="net" role="status" hidden></p>
+      <button class="palbtn" type="button" id="palette-btn" aria-keyshortcuts="Control+K">
+        <span class="icon" data-icon="search" aria-hidden="true"></span><span class="palbtn__text">Axtar…</span>
+        <kbd class="palbtn__kbd">Ctrl K</kbd>
+      </button>
     </header>
 
     <main class="main" id="main" tabindex="-1">
@@ -383,30 +386,55 @@
 
       <!-- ── Nəticə ────────────────────────────────────────────────────── -->
       <section class="view" id="view-results" aria-labelledby="res-plan" hidden>
-        <header class="reshead" id="reshead">
-          <div class="reshead__main">
-            <p class="kicker">Biznes plan <span class="tag tag--demo" id="res-demo" hidden>Demo</span></p>
-            <h1 class="reshead__title" id="res-plan"></h1>
-            <p class="resstatus">
-              <span class="statuspill" id="res-status"><span class="statuspill__dot" aria-hidden="true"></span><span class="sr-only">Hazırlıq statusu: </span><span id="res-status-label"></span></span>
-              <span class="resstatus__run" id="res-runstate"></span>
+        <header class="hero" id="reshead" data-tone="skip">
+          <div class="hero__top">
+            <p class="hero__meta">
+              <span class="hero__kicker">Biznes plan</span><span class="tag tag--demo" id="res-demo" hidden>Demo</span>
+              <span class="hero__dot" aria-hidden="true">·</span><span id="res-version"></span>
+              <span class="hero__dot" aria-hidden="true">·</span><span class="sr-only">Yoxlama tarixi: </span><span id="res-runstate"></span>
+              <span class="hero__dot" aria-hidden="true">·</span><span class="hero__file"><span class="icon" data-icon="fileText" aria-hidden="true"></span><span class="sr-only">Fayl: </span><span id="res-file"></span></span>
             </p>
-            <dl class="docmeta">
-              <div><dt><span class="icon" data-icon="fileText" aria-hidden="true"></span><span class="sr-only">Fayl</span></dt><dd id="res-file"></dd></div>
-              <div><dt><span class="icon" data-icon="layers" aria-hidden="true"></span><span class="sr-only">Versiya</span></dt><dd id="res-version"></dd></div>
-            </dl>
+            <div class="hero__actions reshead__actions">
+              <button class="btn btn--small reshead__print" type="button" id="print-btn">
+                <span class="icon" data-icon="printer" aria-hidden="true"></span><span class="hero__actlabel">Çap</span>
+              </button>
+              <button class="btn btn--small" type="button" id="res-newversion">
+                <span class="icon" data-icon="upload" aria-hidden="true"></span><span class="hero__actlabel">Yeni versiya</span>
+              </button>
+            </div>
           </div>
-          <div class="reshead__actions">
-            <button class="btn btn--small reshead__print" type="button" id="print-btn">
-              <span class="icon" data-icon="printer" aria-hidden="true"></span>Hesabatı çap et
+          <h1 class="hero__title" id="res-plan"></h1>
+          <div class="hero__grid">
+            <button class="hero__block hero__block--ready" type="button" data-hero-goto="panel-teleb" aria-describedby="hero-ready-sub">
+              <span class="hero__ring" id="hero-ring"></span>
+              <span class="hero__btext">
+                <span class="hero__label">Hazırlıq</span>
+                <span class="hero__sub" id="hero-ready-sub"></span>
+              </span>
             </button>
-            <button class="btn btn--small" type="button" id="res-newversion">
-              <span class="icon" data-icon="upload" aria-hidden="true"></span>Yeni versiya yüklə
+            <button class="hero__block hero__block--verdict" type="button" data-hero-goto="panel-xulase">
+              <span class="statuspill" id="res-status"><span class="statuspill__dot" aria-hidden="true"></span><span class="sr-only">Hazırlıq statusu: </span><span id="res-status-label"></span></span>
+              <span class="hero__sub hero__sub--strong" id="hero-verdict-tally"></span>
+              <span class="hero__sub hero__flag" id="hero-verdict-block"></span>
+            </button>
+            <button class="hero__block hero__block--risk" type="button" id="hero-risk" data-hero-goto="panel-iqtisadi" data-tone="skip">
+              <span class="hero__label">İqtisadi risk: <strong class="hero__risk" id="hero-risk-level">—</strong></span>
+              <span class="hero__sub hero__sub--strong" id="hero-risk-text"></span>
+              <span class="hero__sub" id="hero-risk-q"></span>
             </button>
           </div>
         </header>
+        <!-- Kompakt zolaq: hero görünüşdən çıxanda (shell/hero.js). Ekran oxuyucu üçün təkrardır — aria-hidden. -->
+        <div class="herobar" id="herobar" aria-hidden="true" inert>
+          <div class="herobar__in">
+            <button class="herobar__name" type="button" id="herobar-top" tabindex="-1"><span id="herobar-name"></span></button>
+            <span class="statuspill" id="herobar-pill"><span class="statuspill__dot"></span><span id="herobar-status"></span></span>
+            <span class="herobar__risk" id="herobar-risk"></span>
+          </div>
+        </div>
 
         <div class="tabsbar"><div class="tabs" role="tablist" aria-label="Nəticə bölmələri" id="tabs">
+          <span class="tabs__ind" id="tabs-ind" aria-hidden="true"></span>
           <button class="tab" role="tab" id="tab-xulase" aria-controls="panel-xulase"
                   aria-selected="true" tabindex="0">Nəticə</button>
           <button class="tab" role="tab" id="tab-maliyye" aria-controls="panel-maliyye"
@@ -415,16 +443,16 @@
                   aria-selected="false" tabindex="-1"><span class="tab__full">İqtisadi təhlil</span><span class="tab__short">İqtisadi</span> <span class="tab__count" id="count-iqtisadi"></span></button>
           <button class="tab" role="tab" id="tab-teleb" aria-controls="panel-teleb"
                   aria-selected="false" tabindex="-1"><span class="tab__full">Standart tələblər</span><span class="tab__short">Tələblər</span> <span class="tab__count" id="count-teleb"></span></button>
-          <button class="tab" role="tab" id="tab-elave" aria-controls="panel-elave"
-                  aria-selected="false" tabindex="-1"><span class="tab__full">Əlavə tələblər</span><span class="tab__short">Əlavə</span> <span class="tab__count" id="count-elave"></span></button>
           <button class="tab" role="tab" id="tab-bosyer" aria-controls="panel-bosyer"
                   aria-selected="false" tabindex="-1">Boş yerlər <span class="tab__count" id="count-bosyer"></span></button>
           <button class="tab" role="tab" id="tab-suallar" aria-controls="panel-suallar"
                   aria-selected="false" tabindex="-1"><span class="tab__full">Suallar və sənədlər</span><span class="tab__short">Suallar</span> <span class="tab__count" id="count-suallar"></span></button>
+          <button class="tab" role="tab" id="tab-elave" aria-controls="panel-elave"
+                  aria-selected="false" tabindex="-1"><span class="tab__full">Əlavə tələblər</span><span class="tab__short">Əlavə</span> <span class="tab__count" id="count-elave"></span></button>
           <button class="tab" role="tab" id="tab-muqayise" aria-controls="panel-muqayise"
                   aria-selected="false" tabindex="-1">Müqayisə</button>
           <button class="tab" role="tab" id="tab-agentler" aria-controls="panel-agentler"
-                  aria-selected="false" tabindex="-1">Agentlər <span class="tab__count" id="count-agentler"></span></button>
+                  aria-selected="false" tabindex="-1" data-debug>Texniki jurnal <span class="tab__count" id="count-agentler"></span></button>
         </div>
           <!-- Sığmayan tablar: "Daha çox" menyusu (static/app.js → layoutTabs). Tablar DOM-da qalır — ?tab= işləyir. -->
           <div class="tabsmore" id="tabs-more-wrap" hidden>

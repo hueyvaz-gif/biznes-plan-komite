@@ -118,7 +118,7 @@ for (const scheme of ['light', 'dark']) {
       await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
       await page.goto(URL, { waitUntil: 'networkidle' });
       await page.evaluate(() => document.fonts.ready);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
       await expect(page).toHaveScreenshot(`kitchen-sink-${scheme}-${width}.png`, { fullPage: true });
     });
   }

@@ -13,6 +13,7 @@ function renderPlaceholders(items) {
   items.forEach((item, index) => {
     const row = el('tr');
     row.tabIndex = 0;
+    row.id = 'ph-' + index;                        // command palette (Ctrl+K) hədəfi
     const where = el('td');
     where.append(item.where === 'cədvəl' ? badge('s-doc', 'cədvəl ' + (item.table_id || '')) : badge('s-skip', 'paraqraf'));
     row.append(el('td', 'mono', item.text), el('td', null, item.section_title), where, el('td', 'ctx', item.context));

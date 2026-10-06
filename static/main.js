@@ -10,6 +10,8 @@ import { closeDetail, trapFocus } from './shell/detail.js';
 import { resetToUpload, retryCheck } from './shell/session.js';
 import { loadHistory, renderNavCurrent } from './shell/sidebar.js';
 import { selectTab, wireTabs } from './shell/tabs.js';
+import { wireHero } from './shell/hero.js';
+import { wireShortcuts } from './shell/palette.js';
 import { closeNav, openNav, setOnline, showView } from './shell/views.js';
 import { AG, renderAgentTable } from './views/debug-log.js';
 import { setFinanceFilter } from './views/finance.js';
@@ -43,6 +45,8 @@ async function init() {
   document.querySelectorAll('[data-icon]').forEach((n) => setIcon(n, n.dataset.icon));
   wireDropzone();
   wireTabs();
+  wireHero();
+  wireShortcuts();
   revealOnce(document.querySelector('.explain__art'));
   $('upload-form').addEventListener('submit', submitCheck);
   $('extra-add').addEventListener('click', () => $('extra-input').click());
@@ -53,6 +57,11 @@ async function init() {
   $('plan-select').addEventListener('change', updateFormState);
   $('extra-toggle').addEventListener('click', () => setExtrasOpen($('extra-toggle').getAttribute('aria-expanded') !== 'true'));
   $('nav-history').addEventListener('click', () => {
+    // Rail rejimində (861–1080px) siyahı görünmür — panel tam enində açılır.
+    if (matchMedia('(min-width: 861px) and (max-width: 1080px)').matches && !$('sidebar').classList.contains('is-open')) {
+      openNav();
+      return;
+    }
     const open = $('nav-history').getAttribute('aria-expanded') !== 'true';
     $('nav-history').setAttribute('aria-expanded', String(open));
     $('history-box').hidden = !open;

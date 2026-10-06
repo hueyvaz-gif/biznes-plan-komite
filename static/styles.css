@@ -1739,11 +1739,6 @@ th.fin__go, td.fin__go { width: auto; }
 @media print { .mnewsbox { display: none !important; } }
 
 /* Planı sil: düymə və təsdiq pəncərəsi */
-.plan__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 8px 20px; }
-.plan__actions .newversion { margin: 0; }
-.plan__delete { display: inline-flex; align-items: center; gap: 4px; border-color: transparent; background: transparent; }
-.plan__delete .icon { width: 14px; height: 14px; }
-.plan__delete:hover, .plan__delete:focus-visible { background: var(--fail-bg); border-color: var(--fail-line); }
 .confirm { width: min(440px, calc(100vw - 32px)); padding: 22px 22px 18px; border: 1px solid var(--line);
            border-radius: var(--r-lg); background: var(--surface); color: var(--ink); box-shadow: var(--e-3); }
 .confirm::backdrop { background: var(--backdrop); }

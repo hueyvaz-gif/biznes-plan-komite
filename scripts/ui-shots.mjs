@@ -29,7 +29,7 @@ for (const w of widths) {
   for (const [name, query] of pages) {
     await page.goto(base + query, { waitUntil: 'networkidle' });
     await page.waitForTimeout(700);
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (overflow > 0) problems.add(`${w} ${name}: üfüqi daşma ${overflow}px`);
     await page.screenshot({ path: `${out}/${name}-${w}${theme === 'dark' ? '-dark' : ''}.png`, fullPage: true });
   }

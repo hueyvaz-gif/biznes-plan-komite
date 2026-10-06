@@ -1,28 +1,62 @@
-/* Tablar: ox düymələri, "Daha çox" menyusu, sticky ofsetlər. */
+/* Tablar: 6 əsas tab + "Daha çox" (Əlavə tələblər, Müqayisə); Texniki jurnal yalnız ?debug=1.
+ * Sürüşən aktiv indikator, ton badge-ləri, klaviatura qısayolları, panel keçid animasiyası,
+ * hər tab üçün scroll mövqeyi yaddaşı. URL ?tab=… geri uyğundur (köhnə linklər işləyir). */
 import { $, el } from '../core/dom.js';
+import { reducedMotion } from '../ui/motion.js';
 
-/* ── Tablar (ox düymələri ilə) ──────────────────────────────────────────── */
+export const PRIMARY = ['panel-xulase', 'panel-maliyye', 'panel-iqtisadi', 'panel-teleb', 'panel-bosyer', 'panel-suallar'];
+/** Həmişə "Daha çox" menyusunda olan tablar. */
+const MORE = ['tab-elave', 'tab-muqayise'];
+const DEBUG = 'tab-agentler';
 
-function tabs() { return [...document.querySelectorAll('#tabs .tab')]; }
+/** ?debug=1 və ya köhnə ?tab=agentler linki — Texniki jurnal görünür. */
+export function debugMode() {
+  const p = new URLSearchParams(location.search);
+  return p.get('debug') === '1' || p.get('tab') === 'agentler';
+}
+
+function tabs() { return [...document.querySelectorAll('#tabs .tab')].filter((t) => t.id !== DEBUG || debugMode()); }
+const scrollMemory = new Map();
+let current = null;
+
 function selectTab(panelId, focus) {
-  tabs().forEach((tab) => {
+  if (!$(panelId) || (panelId === 'panel-agentler' && !debugMode())) panelId = 'panel-xulase';
+  const prev = current;
+  if (prev && prev !== panelId) scrollMemory.set(prev, scrollY);
+  document.querySelectorAll('#tabs .tab').forEach((tab) => {
     const on = tab.getAttribute('aria-controls') === panelId;
     tab.setAttribute('aria-selected', on ? 'true' : 'false');
     tab.tabIndex = on ? 0 : -1;
-    $(tab.getAttribute('aria-controls')).hidden = !on;
+    const panel = $(tab.getAttribute('aria-controls'));
+    if (panel) panel.hidden = !on;
     if (on) revealTab(tab);
   });
+  current = panelId;
   layoutTabs();                                      // aktiv tab menyudadırsa — düymədə onun adı
   const active = tabs().find((t) => t.getAttribute('aria-controls') === panelId);
   if (focus && active) {
-    if (active.hidden) $('tabs-more').focus(); else active.focus();
+    if (active.hidden) $('tabs-more').focus(); else active.focus({ preventScroll: true });
   }
   const params = new URLSearchParams(location.search);
   params.set('tab', panelId.replace('panel-', ''));
   history.replaceState(null, '', '?' + params.toString());
+
+  if (prev && prev !== panelId) {
+    // Panel 8px yuxarıdan fade-in; scroll mövqeyi tab üzrə bərpa olunur (tab zolağından yuxarı qalxmır).
+    const panel = $(panelId);
+    if (panel && !reducedMotion()) {
+      panel.classList.remove('is-entering');
+      void panel.offsetWidth;
+      panel.classList.add('is-entering');
+    }
+    const bar = document.querySelector('.tabsbar');
+    const barTop = bar ? bar.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(bar).top) || 0) : 0;
+    const saved = scrollMemory.get(panelId);
+    const target = saved !== undefined ? Math.max(saved, Math.min(scrollY, barTop)) : Math.min(scrollY, barTop);
+    if (scrollY > barTop || saved !== undefined) scrollTo({ top: target });
+  }
 }
-/** Seçilmiş tabı yalnız tab zolağının İÇİNDƏ üfüqi görünən edir — səhifə şaquli sürüşmür
- *  (əvvəl scrollIntoView mobil ekranı açılışda başlıq və möhürdən aşağı aparırdı). */
+/** Seçilmiş tabı yalnız tab zolağının İÇİNDƏ üfüqi görünən edir — səhifə şaquli sürüşmür. */
 function revealTab(tab) {
   const strip = $('tabs');
   const t = tab.getBoundingClientRect();
@@ -30,7 +64,27 @@ function revealTab(tab) {
   if (t.left < s.left) strip.scrollLeft -= s.left - t.left + 16;
   else if (t.right > s.right) strip.scrollLeft += t.right - s.right + 16;
 }
+
+/** Aktiv tab altında sürüşən pill (FLIP: transform + en, 200ms). Aktiv tab menyudadırsa gizlənir. */
+function moveIndicator(animate = true) {
+  const ind = $('tabs-ind');
+  const strip = $('tabs');
+  if (!ind || !strip) return;
+  const active = tabs().find((t) => t.getAttribute('aria-selected') === 'true');
+  if (!active || active.hidden) { ind.classList.add('is-off'); return; }
+  ind.classList.toggle('is-instant', !animate || !ind.dataset.ready);
+  ind.classList.remove('is-off');
+  ind.style.width = active.offsetWidth + 'px';
+  ind.style.height = active.offsetHeight + 'px';
+  ind.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+  ind.dataset.ready = '1';
+}
+
 function wireTabs() {
+  const strip = $('tabs');
+  strip.classList.add('has-ind');
+  const agent = $(DEBUG);
+  if (agent && !debugMode()) agent.hidden = true;
   tabs().forEach((tab) => {
     tab.addEventListener('click', () => selectTab(tab.getAttribute('aria-controls'), true));
     tab.addEventListener('keydown', (e) => {
@@ -45,6 +99,13 @@ function wireTabs() {
       if (next) { e.preventDefault(); selectTab(next.getAttribute('aria-controls'), true); }
     });
   });
+  // Kənar fade-ləri yalnız o istiqamətdə sürüşdürmək mümkün olanda (mobil scroll-snap zolağı).
+  const edges = () => {
+    strip.classList.toggle('at-start', strip.scrollLeft <= 1);
+    strip.classList.toggle('at-end', strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 1);
+  };
+  strip.addEventListener('scroll', edges, { passive: true });
+  strip.edges = edges;
   wireTabsMore();
   if ('ResizeObserver' in window) {
     // Zolağın eni və tabların öz eni (şrift yüklənəndə, nişan dəyişəndə) dəyişəndə yenidən yerləşdirilir.
@@ -59,17 +120,11 @@ function wireTabs() {
   window.addEventListener('resize', () => layoutTabs());
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layoutTabs());
 }
-/* ── Tab zolağı: sığmayan tablar "Daha çox" menyusuna (üfüqi scrollbar yoxdur) ── */
+/* ── Tab zolağı: "Daha çox" menyusu (üfüqi scrollbar yoxdur) ───────────── */
 
-/** Menyuya ilk keçən tablar (aşağı prioritet). Nişanında problem sayı olan tab menyuya düşmür. */
-const TAB_OVERFLOW_ORDER = ['tab-agentler', 'tab-muqayise', 'tab-elave'];
-function tabBadge(tab) {
-  const count = tab.querySelector('.tab__count');
-  return count && !count.classList.contains('is-zero') && Number(count.textContent) > 0;
-}
 /**
- * Mərhələlər: (1) hamısı tam adla; (2) qısa adlarla; (3) aşağı prioritetli, nişansız tablar menyuya;
- * (4) dar ekranda yalnız aktiv tab zolaqda, qalanları menyuda. Hər mərhələdə zolağın sığması ölçülür.
+ * Mərhələlər: (0) Əlavə tələblər, Müqayisə (və Texniki jurnal) həmişə menyuda; (1) tam adlar; (2) qısa adlar;
+ * (3) sıx tablar; (4) "Daha çox" yalnız ikon; (5) dar ekranda yalnız aktiv tab zolaqda, qalanları menyuda.
  */
 function layoutTabs() {
   const strip = $('tabs');
@@ -79,28 +134,32 @@ function layoutTabs() {
   const active = all.find((t) => t.getAttribute('aria-selected') === 'true') || all[0];
   const btn = $('tabs-more');
   const fits = () => strip.scrollWidth <= strip.clientWidth + 1;
-  let overflow = [];
-  // Menyu və düymənin mətni hər yoxlamadan ƏVVƏL yazılır — düymənin eni də ölçüyə daxildir.
+  const fixed = all.filter((t) => MORE.includes(t.id) || t.id === DEBUG);
+  let overflow = [...fixed];
   const apply = () => renderTabsMenu(all.filter((t) => overflow.includes(t)), active);
-  all.forEach((t) => { t.hidden = false; });
-  strip.classList.remove('is-short', 'is-tight');
+  all.forEach((t) => { t.hidden = fixed.includes(t) && t !== active; });
+  // Menyudakı tab aktivdirsə, o zolaqda görünür (istifadəçi harada olduğunu görsün).
+  if (fixed.includes(active)) overflow = overflow.filter((t) => t !== active);
+  strip.classList.remove('is-short', 'is-tight', 'is-scroll');
   btn.classList.remove('is-icon');
   apply();
+  if (matchMedia('(max-width: 768px)').matches) {
+    // Mobil: zolaq üfüqi sürüşür (scroll-snap) — tablar menyuya gizlədilmir, qısa adlar işlənir.
+    strip.classList.add('is-scroll', 'is-short');
+    btn.classList.add('is-icon');
+    apply();
+    updateStickyOffsets();
+    moveIndicator(false);
+    const act = all.find((t) => t.getAttribute('aria-selected') === 'true');
+    if (act && !act.hidden) revealTab(act);
+    if (strip.edges) strip.edges();
+    return;
+  }
   const steps = [
-    () => strip.classList.add('is-short'),                         // 2) qısa adlar
-    () => {                                                          // 3) aşağı prioritetli, nişansız tablar menyuya
-      for (const id of TAB_OVERFLOW_ORDER) {
-        const t = $(id);
-        if (!t || tabBadge(t)) continue;
-        t.hidden = true;
-        overflow.push(t);
-        apply();
-        if (fits()) return;
-      }
-    },
-    () => strip.classList.add('is-tight'),                         // 4) sıx tablar
-    () => { if (!overflow.includes(active)) btn.classList.add('is-icon'); },   // 5) "Daha çox" — yalnız ikon
-    () => {                                                          // 6) dar ekran: zolaqda yalnız aktiv tab
+    () => strip.classList.add('is-short'),
+    () => strip.classList.add('is-tight'),
+    () => btn.classList.add('is-icon'),
+    () => {
       all.forEach((t) => { t.hidden = t !== active; });
       overflow = all.filter((t) => t !== active);
       btn.classList.remove('is-icon');
@@ -112,6 +171,7 @@ function layoutTabs() {
     apply();
   }
   updateStickyOffsets();
+  moveIndicator();
 }
 function renderTabsMenu(overflow, active) {
   const wrap = $('tabs-more-wrap');
@@ -120,8 +180,6 @@ function renderTabsMenu(overflow, active) {
   const btn = $('tabs-more');
   wrap.hidden = overflow.length === 0;
   const activeInMenu = overflow.includes(active);
-  // Aktiv tab menyudadırsa — düymədə onun adı.
-  // Zolaq qısa adlardadırsa, düymədə də qısa ad ("Əlavə") — en ölçüsünə daxildir.
   const short = $('tabs').classList.contains('is-short') && active.querySelector('.tab__short');
   label.textContent = activeInMenu
     ? (short || active.querySelector('.tab__full') || active).firstChild.textContent.trim() : 'Daha çox';
@@ -137,6 +195,7 @@ function renderTabsMenu(overflow, active) {
     const count = t.querySelector('.tab__count');
     if (count && count.textContent) {
       const c = el('span', 'tab__count' + (count.classList.contains('is-zero') ? ' is-zero' : ''), count.textContent);
+      if (count.dataset.tone) c.dataset.tone = count.dataset.tone;
       c.title = count.title;
       item.append(c);
     }
@@ -186,16 +245,47 @@ function wireTabsMore() {
 }
 /**
  * Yapışqan zolağın alt sərhədi (`--tabs-h`) və açıq paneldəki yapışqan filtr sətrinin hündürlüyü
- * (`--filters-h`): altdakı yapışqan elementlər və keçidlərin hədəfi (scroll-margin) bunları işlədir.
+ * (`--filters-h`), cəmi (`--sticky-stack-h`, cədvəl başlıqları üçün).
  */
 function updateStickyOffsets() {
   const bar = document.querySelector('.tabsbar');
   if (!bar || bar.offsetParent === null) return;
+  // Kompakt rejimdə ölçülmür: --tabs-h tam ölçüdə qalır (kompensasiya margin-dədir) — sticky ofsetlər oynamır.
+  if (document.getElementById('view-results')?.classList.contains('is-compact')) return;
   const top = parseFloat(getComputedStyle(bar).top) || 0;
-  document.documentElement.style.setProperty('--tabs-h', Math.ceil(top + bar.offsetHeight) + 'px');
+  const tabsH = Math.ceil(top + bar.offsetHeight);
+  document.documentElement.style.setProperty('--tabs-h', tabsH + 'px');
   const panel = [...document.querySelectorAll('#view-results .panel')].find((p) => !p.hidden);
   const sticky = panel && [...panel.querySelectorAll('.stickyrow')].find((n) => getComputedStyle(n).position === 'sticky');
-  document.documentElement.style.setProperty('--filters-h', (sticky ? Math.ceil(sticky.offsetHeight) : 0) + 'px');
+  const filtersH = sticky ? Math.ceil(sticky.offsetHeight) : 0;
+  document.documentElement.style.setProperty('--filters-h', filtersH + 'px');
+  document.documentElement.style.setProperty('--sticky-stack-h', (tabsH + filtersH) + 'px');
 }
 
-export { layoutTabs, selectTab, wireTabs };
+/**
+ * Tab nişanı — tab, tile və siyahı eyni mənbədən sayır; burada yalnız göstərilir.
+ *   n > 0 → say, ton (warn | fail | info); n === 0 və complete → yaşıl ✓; məlumat yoxdursa boş.
+ */
+export function setTabCount(id, n, { tone = 'warn', title = '', complete = false, doneTitle = '' } = {}) {
+  const b = $(id);
+  if (!b) return;
+  if (n) {
+    b.textContent = String(n);
+    b.dataset.tone = tone;
+    b.classList.remove('is-zero');
+    b.title = title;
+  } else if (complete) {
+    b.textContent = '✓';
+    b.dataset.tone = 'ok';
+    b.classList.add('is-zero');
+    b.title = doneTitle || 'Problem yoxdur';
+  } else {
+    b.textContent = '';
+    delete b.dataset.tone;
+    b.classList.add('is-zero');
+    b.title = '';
+  }
+  b.parentElement.title = b.title;
+}
+
+export { layoutTabs, moveIndicator, selectTab, wireTabs };
