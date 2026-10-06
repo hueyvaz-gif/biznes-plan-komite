@@ -29,6 +29,15 @@ def test_ana_səhifə_açılır(client):
     assert "Biznes Plan qiymətləndirmə komitəsi" in response.text
 
 
+def test_kitchen_sink_səhifəsi(client):
+    response = client.get("/?ui=kitchen-sink")
+    assert response.status_code == 200
+    assert 'id="kitchen-sink"' in response.text
+    assert "/static/app.js" not in response.text           # tətbiqin init-i işə düşmür
+    # Naməlum ui dəyəri adi səhifəni qaytarır.
+    assert "/static/app.js" in client.get("/?ui=başqa").text
+
+
 def test_meta(client):
     data = client.get("/api/meta").json()
     assert data["allowed_suffix"] == ".docx"

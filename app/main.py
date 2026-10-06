@@ -674,8 +674,9 @@ app.mount("/static", RevalidatedStaticFiles(directory=str(config.STATIC_DIR)), n
 
 
 @app.get("/")
-async def index() -> Any:
-    page = config.STATIC_DIR / "index.html"
+async def index(ui: str | None = None) -> Any:
+    # ?ui=kitchen-sink — komponent kitabxanasının vitrini (dev; vizual reqressiya testlərinin əsası).
+    page = config.STATIC_DIR / ("kitchen-sink.html" if ui == "kitchen-sink" else "index.html")
     if not page.exists():
         return JSONResponse({"detail": "index.html tapılmadı."}, status_code=404)
     return FileResponse(page, headers={"Cache-Control": "no-cache"})

@@ -6,7 +6,7 @@
   "scripts": {
     "css:audit": "node scripts/css-audit.mjs",
     "test:js": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/js/*.test.js tests/js/*.test.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test -c playwright.config.mjs",
     "shots": "node scripts/ui-shots.mjs"
   },
   "devDependencies": {

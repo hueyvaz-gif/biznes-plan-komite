@@ -16,6 +16,7 @@
   </script>
   <link rel="stylesheet" href="/static/tokens.css">
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/ui/ui.css">
 </head>
 <body>
 <a class="skip-link" href="#main">Əsas məzmuna keç</a>
@@ -92,6 +93,7 @@
         <span class="icon" data-icon="help" aria-hidden="true"></span>Kömək mərkəzi
       </button>
       <p class="sidebar__foot">Status sənədin tamlığına aiddir — investisiya qərarı deyil.</p>
+      <div class="sbfoot__theme" id="theme-switch"></div>
     </footer>
   </aside>
   <div class="scrim" id="nav-scrim" hidden></div>
@@ -835,5 +837,10 @@
 <script src="/static/app.js"></script>
 <script src="/static/econ-core.js"></script>
 <script src="/static/economics.js"></script>
+<script type="module">
+  // Tema keçidi (Avto / Açıq / Tünd) — komponent kitabxanasından; seçim localStorage-da.
+  import { ThemeSwitch } from '/static/ui/badge.js';
+  document.getElementById('theme-switch')?.append(ThemeSwitch());
+</script>
 </body>
 </html>

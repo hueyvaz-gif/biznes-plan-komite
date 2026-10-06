@@ -2,8 +2,9 @@
  *
  * Qərarlar:
  *   • Valyuta işarəsi hər yerdə "₼" (kompakt, dar sütunlara sığır). Ekran oxuyucu üçün moneyLabel() "manat" yazır.
- *   • Intl.NumberFormat('az-AZ') əsasdır; onun mərtəbə ayırıcısı (".") bölünməz boşluqla əvəz olunur —
- *     "1 944 881" komitə sənədlərindəki yazılışdır və onluq vergüllə qarışmır.
+ *   • Intl.NumberFormat('az-AZ') əsasdır (yuvarlaqlaşdırma, rəqəm qrupları); ayırıcılar isə sabitlənir:
+ *     mərtəbə — bölünməz boşluq ("1 944 881", komitə sənədlərindəki yazılış), onluq — vergül.
+ *     Səbəb: az-AZ lokalı olmayan brauzer qurğularında (məs. headless Chromium) Intl "en" ayırıcılarına düşür.
  *   • Mənfi işarə həmişə U+2212 "−" (defis yox). signed:true → "+1,2 mln ₼".
  *   • Boş dəyər (null / undefined / '' / NaN) → "—".
  */
@@ -30,7 +31,7 @@ export function isNum(v) {
 /** Mütləq dəyəri formatlayır: mərtəbələr NBSP ilə, onluq vergül. */
 function abs(v, min, max) {
   return nf(min, max).formatToParts(Math.abs(v))
-    .map((p) => (p.type === 'group' ? NBSP : p.value)).join('');
+    .map((p) => (p.type === 'group' ? NBSP : p.type === 'decimal' ? ',' : p.value)).join('');
 }
 
 /** İşarə: mənfi → "−"; signed → "+" (sıfır işarəsiz). Yuvarlaqlaşdırılmış sıfır işarə almır. */

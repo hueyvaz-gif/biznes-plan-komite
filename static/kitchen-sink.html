@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Komponentlər · kitchen-sink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="/static/tokens.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/ui/ui.css">
+  <link rel="stylesheet" href="/static/ui/kitchen-sink.css">
+</head>
+<body>
+<main class="ks" id="kitchen-sink">
+  <header class="ks__head">
+    <div>
+      <p class="ks__eyebrow">Dizayn sistemi · dev</p>
+      <h1 class="ks__title">Komponentlər</h1>
+      <p class="ks__lead">static/ui/ kitabxanasının bütün variantları. Vizual reqressiya testləri bu səhifəni çəkir.</p>
+    </div>
+    <div id="ks-theme"></div>
+  </header>
+  <div id="ks-root"></div>
+</main>
+<script type="module" src="/static/ui/kitchen-sink.js"></script>
+</body>
+</html>

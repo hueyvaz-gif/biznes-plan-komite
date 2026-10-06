@@ -1,0 +1,22 @@
+/* Kitchen-sink səhifəsinin karkası (yalnız dev vitrini). */
+.ks { max-width: 1120px; margin: 0 auto; padding: var(--sp-10) var(--sp-6) var(--sp-12); }
+.ks__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-8); }
+.ks__eyebrow { margin: 0; color: var(--ink-faint); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.ks__title { font-size: var(--fs-3xl); line-height: var(--lh-3xl); letter-spacing: -.02em; }
+.ks__lead { margin: var(--sp-2) 0 0; color: var(--ink-soft); }
+.ks-sec { margin-bottom: var(--sp-10); }
+.ks-sec__title { margin-bottom: var(--sp-1); font-size: var(--fs-2xl); line-height: var(--lh-2xl); letter-spacing: -.01em; }
+.ks-sec__note { margin: 0 0 var(--sp-4); color: var(--ink-soft); font-size: var(--fs-sm); }
+.ks-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.ks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.ks-grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.ks-label { min-width: 120px; color: var(--ink-faint); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.ks-type { display: grid; gap: var(--sp-2); }
+.ks-type > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: baseline; gap: var(--sp-4); }
+.ks-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-3); }
+.ks-swatch { display: grid; gap: var(--sp-1); padding: var(--sp-3); border: 1px solid var(--sw-line); border-radius: var(--r-md); background: var(--sw-bg); color: var(--sw-fg); font-size: var(--fs-sm); }
+.ks-swatch b { font-size: var(--fs-md); }
+.ks-elev { display: grid; place-items: center; height: 88px; border-radius: var(--r-lg); background: var(--surface); color: var(--ink-soft); font-size: var(--fs-sm); }
+.ks-fmt { font-variant-numeric: tabular-nums; }
+.ks-fmt code { font-family: var(--mono); font-size: var(--fs-sm); color: var(--ink-soft); }
+@media (max-width: 600px) { .ks { padding: var(--sp-6) var(--sp-4); } .ks-type > div { grid-template-columns: minmax(0, 1fr); gap: 0; } }

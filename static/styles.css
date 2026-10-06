@@ -1184,6 +1184,9 @@ ul.aimsg__list { padding-left: 18px; list-style: disc; }
 .sbfoot { flex: none; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 8px; }
 .sbfoot .navitem--help { margin-top: 0; min-height: 36px; font-size: var(--fs-md); }
 .sbfoot .sidebar__foot { font-size: var(--fs-xs); padding: 0 10px; line-height: 1.4; }
+.sbfoot__theme { padding: 6px 10px 0; }
+.sbfoot__theme .ui-segmented { width: 100%; }
+.sbfoot__theme .ui-segmented__opt { flex: 1; }
 
 /* ── Başlıq: etiket və real faktlar ────────────────────────────────────── */
 .pagehead--hero { position: relative; isolation: isolate; }
