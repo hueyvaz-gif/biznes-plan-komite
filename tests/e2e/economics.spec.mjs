@@ -119,13 +119,14 @@ test('kart: yığılı → açılır; sual mətni tapıntını təkrarlamır; "N
   await expect(card.getByRole('button', { name: 'Necə hesablanıb' })).toBeVisible();
 });
 
-test('reallıq: benchmark gözlənilir — boş vəziyyət və siyahı, admin qeydi', async ({ page }) => {
+test('reallıq: benchmark gözlənilir — boş vəziyyət və mənbəsi çatışmayan göstəricilər', async ({ page }) => {
   await open(page);
   const real = econ.result.findings.filter((f) => f.group === 'realliq');
   const waiting = real.filter((f) => f.status === 'skip').length;
   if (waiting) {
-    await expect(page.locator('#econ-reality')).toContainText(`${waiting} benchmark-ın mənbəyi gözlənilir`);
-    await expect(page.locator('#econ-reality')).toContainText('config/benchmarks/gubre.yaml');
+    await expect(page.locator('#econ-reality')).toContainText('Bazarla müqayisə tamamlanmayıb');
+    await expect(page.locator('#econ-reality')).toContainText(`${waiting} göstərici üçün mənbə və tarix çatışmır`);
+    await expect(page.locator('#econ-reality details tbody tr')).toHaveCount(waiting);
   }
 });
 

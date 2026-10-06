@@ -66,9 +66,9 @@ test('KPI kliki sətri açır və vurğulayır', async ({ page }) => {
   await expect(page.locator('#frow-npv')).toHaveClass(/is-flash/);
 });
 
-test('Nəticə tabındakı "Ətraflı" Maliyyə tabında sətri açır', async ({ page }) => {
+test('Nəticə tabındakı göstərici kartı Maliyyə tabında sətri açır', async ({ page }) => {
   await page.goto(`/?check=${CHECK}&tab=xulase`, { waitUntil: 'networkidle' });
-  await page.locator('#finsum-host tr', { hasText: 'Daxili rentabellik' }).getByRole('button').click();
+  await page.locator('#panel-xulase .metric', { hasText: 'IRR' }).click();
   await expect(page).toHaveURL(/tab=maliyye/);
   await expect(page.locator('#frow-irr .fintbl__more')).toHaveAttribute('aria-expanded', 'true');
 });
@@ -87,13 +87,13 @@ test('sticky: cədvəl başlığı filtr zolağının altında qalır (örtülm�
 
 test('pul axını: qalıq dəyər ayrıca seqment, payback markeri, hover və klaviatura tooltip-i', async ({ page }) => {
   await open(page);
-  const fig = page.locator('.cfc__fig');
+  const fig = page.locator('#fin-cashflow .cfc__fig');
   await fig.scrollIntoViewIfNeeded();
-  await expect(page.locator('.cfc__res')).toHaveCount(1);
-  await expect(page.locator('.cfc__pptext')).toContainText('Özünü ödəmə · 2034');
-  const hits = page.locator('.cfc__hit');
+  await expect(page.locator('#fin-cashflow .cfc__res')).toHaveCount(1);
+  await expect(page.locator('#fin-cashflow .cfc__pptext')).toContainText('Özünü ödəmə · 2034');
+  const hits = page.locator('#fin-cashflow .cfc__hit');
   await hits.nth(10).hover();
-  const tip = page.locator('.cfc__tip');
+  const tip = page.locator('#fin-cashflow .cfc__tip');
   await expect(tip).toBeVisible();
   await expect(tip).toContainText('2037');
   await expect(tip).toContainText('qalıq dəyər');
@@ -137,7 +137,7 @@ for (const w of [974, 768, 375]) {
 test('reduced-motion: qrafik animasiyası yoxdur', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page);
-  await page.locator('.cfc__fig').scrollIntoViewIfNeeded();
+  await page.locator('#fin-cashflow .cfc__fig').scrollIntoViewIfNeeded();
   await page.waitForTimeout(300);
-  await expect(page.locator('.cfc')).not.toHaveClass(/is-animating/);
+  await expect(page.locator('#fin-cashflow .cfc')).not.toHaveClass(/is-animating/);
 });
