@@ -29,3 +29,6 @@ data/*.db-wal
 node_modules/
 test-results/
 playwright-report/
+
+# Yaradılmış çıxış faylları (PDF hesabatlar və s.)
+output/
