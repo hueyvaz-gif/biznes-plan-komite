@@ -13,6 +13,7 @@ import { selectTab, wireTabs } from './shell/tabs.js';
 import { wireHero } from './shell/hero.js';
 import { wireShortcuts } from './shell/palette.js';
 import { wireSummary } from './views/summary-panel.js';
+import { wireEconPanel } from './views/econ-panel.js';
 import { closeNav, openNav, setOnline, showView } from './shell/views.js';
 import { AG, renderAgentTable } from './views/debug-log.js';
 import { setFinanceFilter } from './views/finance.js';
@@ -50,6 +51,7 @@ async function init() {
   wireShortcuts();
   wireSummary();
   wireRequirements();
+  wireEconPanel();
   revealOnce(document.querySelector('.explain__art'));
   $('upload-form').addEventListener('submit', submitCheck);
   $('extra-add').addEventListener('click', () => $('extra-input').click());

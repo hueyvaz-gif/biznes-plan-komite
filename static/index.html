@@ -604,42 +604,53 @@
         <!-- İqtisadi təhlil -->
         <div class="panel" id="panel-iqtisadi" role="tabpanel" aria-labelledby="tab-iqtisadi" tabindex="0" hidden>
           <h2 class="print-only print-title">İqtisadi təhlil</h2>
-          <div class="econhead" id="econ-head">
-            <div class="econhead__main">
-              <p class="econhead__risk" id="econ-risk"></p>
-              <p class="econhead__state" id="econ-state" role="status"></p>
+          <!-- Risk banner: səviyyə + nəticə cümləsi (kodla); texniki qeyd yığcam, bağlana bilən -->
+          <section class="riskban" id="econ-banner" data-tone="skip" aria-labelledby="econ-banner-title">
+            <div class="riskban__main">
+              <p class="riskban__level" id="econ-banner-title"><span id="econ-level">İqtisadi təhlil</span></p>
+              <p class="riskban__text" id="econ-banner-text"></p>
+              <p class="riskban__state" id="econ-state" role="status"></p>
             </div>
-            <div class="econhead__actions">
+            <div class="riskban__actions">
               <button class="btn btn--small" type="button" id="econ-run">
                 <span class="icon" data-icon="refresh" aria-hidden="true"></span><span id="econ-run-label">İqtisadi təhlili başlat</span></button>
               <button class="btn btn--small" type="button" id="econ-fresh" hidden
-                      title="Saxlanmış yerlər silinir, model sənədi yenidən oxuyur (bir model çağırışı)">Yenidən oxu (model ilə)</button>
+                      title="Saxlanmış yerlər silinir, model sənədi yenidən oxuyur (bir model çağırışı)">Model ilə yenidən oxu</button>
             </div>
-          </div>
-          <p class="econhead__note" id="econ-notes" hidden></p>
-          <p class="econnote">Uyğunluq statusundan ayrı nəticədir. Rəqəmləri AI hesablamır: hər rəqəm ya sənəddən
-            (yeri və hərfi sitatı ilə), ya kodun hesabından gəlir; hər tapıntı deterministik qaydadır.</p>
-          <div class="stats" id="econ-tiles"></div>
-          <div class="chips stickyrow" role="group" aria-label="Tapıntıların süzgəci" id="econ-filters"></div>
-          <ol class="efindings" id="econ-findings"></ol>
-          <section class="econsec sens" id="econ-sens" hidden aria-labelledby="econ-sens-title">
-            <p class="sens__badge" id="econ-sens-badge" hidden></p>
-            <h3 class="sens__title" id="econ-sens-title">Həssaslıq</h3>
-            <p class="sens__lead" id="econ-sens-lead" hidden></p>
-            <div class="tablewrap"><table class="table table--compact sens__table" id="econ-sens-table">
-              <caption class="sr-only">Həssaslıq ssenariləri: NPV, bazadan dəyişmə, IRR və NPV-nin sıfıra endiyi hədd</caption>
-              <thead><tr><th scope="col">Ssenari</th><th scope="col" class="num">NPV</th>
-                <th scope="col" class="num">Bazadan dəyişmə</th><th scope="col" class="num">IRR</th>
-                <th scope="col" class="num"><abbr title="Amilin NPV-ni sıfıra endirən dəyişməsi (və ya güc istifadəsinin səviyyəsi)">Sıfır həddi</abbr></th></tr></thead>
-              <tbody id="econ-sens-body"></tbody></table></div>
-            <p class="sens__caption" id="econ-tornado-title">Hər ssenarinin NPV-yə təsiri — bazadan sola (azalma) və sağa (artım)</p>
-            <div class="tornado" id="econ-tornado" aria-describedby="econ-tornado-title"></div>
-            <details class="sens__how" id="econ-sens-how">
-              <summary>Necə hesablanıb</summary>
-              <ul class="sens__method" id="econ-sens-method"></ul>
-              <p class="econsec__note" id="econ-sens-note"></p>
-            </details>
+            <div class="riskban__note" id="econ-notes-box" hidden>
+              <span class="icon" data-icon="info" aria-hidden="true"></span>
+              <p id="econ-notes"></p>
+              <button class="iconbtn riskban__close" type="button" id="econ-notes-close" aria-label="Qeydi bağla">
+                <span class="icon" data-icon="x" aria-hidden="true"></span></button>
+            </div>
           </section>
+          <div class="econ3" id="econ-tiles"></div>
+
+          <!-- Risk radarı: tornado + "Nə olarsa?" simulyatoru -->
+          <section class="econsec2" id="econ-radar" aria-labelledby="econ-radar-title" hidden>
+            <h2 class="sumv__h" id="econ-radar-title">Risk radarı</h2>
+            <p class="sumv__sub">Hər ssenari planın öz metodu ilə yenidən hesablanır: vergi yalnız vergi ödənilən illərdə dəyişir,
+              dövriyyə kapitalı və qalıq dəyər hər ssenaridə yenidən tapılır.</p>
+            <div class="radar">
+              <div class="radar__card" id="econ-tornado-card"></div>
+              <div class="radar__card radar__card--sim" id="econ-sim"></div>
+            </div>
+          </section>
+
+          <!-- Tapıntılar: ciddiliyə görə qruplaşdırılmış yığcam siyahı -->
+          <section class="econsec2" aria-labelledby="econ-find-title">
+            <h2 class="sumv__h" id="econ-find-title">Tapıntılar</h2>
+            <p class="sumv__sub">Rəqəmləri AI hesablamır: hər rəqəm ya sənəddən (yeri və hərfi sitatı ilə), ya kodun hesabından gəlir;
+              hər tapıntı deterministik qaydadır. Uyğunluq statusundan ayrı nəticədir.</p>
+            <div id="econ-findings"></div>
+          </section>
+
+          <!-- Reallıq: bazar göstəriciləri ilə tutuşdurma -->
+          <section class="econsec2" id="econ-reality" aria-labelledby="econ-real-title" hidden>
+            <h2 class="sumv__h" id="econ-real-title">Reallıq: bazar göstəriciləri</h2>
+            <div id="econ-reality-body"></div>
+          </section>
+
           <details class="econsec econrej" id="econ-rejected" hidden>
             <summary id="econ-rejected-title"></summary>
             <ul id="econ-rejected-list"></ul>

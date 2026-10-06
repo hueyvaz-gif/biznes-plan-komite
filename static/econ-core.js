@@ -91,7 +91,7 @@
     const h = counts.hessasliq;
     return [
       { title: 'Daxili uyğunluq', value: ratio(d), unit: d.ok + d.flag ? 'uyğun' : '',
-        sub: [part(d.flag, 'bayraq'), part(d.skip, 'yoxlanıla bilmədi'), part(d.na, 'tətbiq edilmir')].filter(Boolean).join(' · ') || 'hamısı uyğun',
+        sub: [part(d.flag, 'diqqət tələb edir'), part(d.skip, 'yoxlanıla bilmədi'), part(d.na, 'tətbiq edilmir')].filter(Boolean).join(' · ') || 'hamısı uyğun',
         hint: 'Planın öz rəqəmləri arasında yoxlanılan qaydalar' },
       { title: 'Reallıq', value: ratio(r), unit: r.ok + r.flag ? 'uyğun' : 'yoxlanılmayıb',
         sub: [part(r.flag, 'diapazondan kənar'), part(r.skip, 'yoxlanıla bilməz')].filter(Boolean).join(' · ') || '—',
@@ -175,8 +175,10 @@
   /** Sıfır həddi: dəyişmə ("−0,9%", "+13%") və ya səviyyə ("~88%"); hədd yoxdursa "—". */
   function thresholdText(t) {
     if (!t) return '—';
-    if (t.kind === 'level') return '~' + Math.round(t.value) + '%';
-    const digits = Math.abs(t.value) < 10 ? 1 : 0;
+    // Dəqiqlik həddin ölçüsünə görə: < 1% — 2 onluq ("−0,97%"), < 10% — 1 onluq, əks halda tam.
+    if (t.kind === 'level') return decimal(t.value, 1) + '%';
+    const a = Math.abs(t.value);
+    const digits = a < 1 ? 2 : a < 10 ? 1 : 0;
     return (t.value < 0 ? '−' : '+') + decimal(t.value, digits) + '%';
   }
 
@@ -285,7 +287,7 @@
 
   function statusWord(x) {
     if (!x) return 'yox idi';
-    if (x.status === 'flag') return 'bayraq (' + (SEVERITY[x.severity] || '') + ')';
+    if (x.status === 'flag') return 'diqqət tələb edir (' + (SEVERITY[x.severity] || '').toLocaleLowerCase('az') + ')';
     return STATUS_WORD[x.status] || x.status;
   }
 

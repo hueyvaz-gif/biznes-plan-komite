@@ -714,7 +714,7 @@ def scenario_findings(rows: list[dict[str, Any]], ctx: Context) -> list[dict[str
                      calc_number(r["title"], r["npv"], "manat", r["formula"]),
                      calc_number("ΔNPV", r["delta"], "manat", "ssenari NPV − baza NPV")],
             result=f"Bu ssenaridə NPV mənfidir: {num(r['npv'])} manat"
-                   + (f"; NPV sıfıra {_threshold_text(r['threshold'])} enir" if r.get("threshold") else "")
+                   + (f"; sıfır həddi — {_threshold_text(r['threshold'])}" if r.get("threshold") else "")
                    + ". " + scenario.ASSUMPTIONS,
             question=SCENARIO_QUESTIONS.get(r["id"], "{npv}").format(npv=num(r["npv"]), base=num(base)),
             extra={"scenario": r["id"], "threshold": r.get("threshold")}))
@@ -722,9 +722,10 @@ def scenario_findings(rows: list[dict[str, Any]], ctx: Context) -> list[dict[str
 
 
 def _threshold_text(t: dict[str, Any]) -> str:
+    """Sıfır həddi mətnlə: "−1,0%" (dəyişmə) və ya "gücdən istifadə 87,5%" (səviyyə)."""
     if t["kind"] == "level":
-        return f"gücdən istifadə {num(t['value'], 1)}%-ə düşəndə"
-    return f"dəyişmə {'+' if t['value'] > 0 else '−'}{num(abs(t['value']), 1)}% olanda"
+        return f"gücdən istifadə {num(t['value'], 1)}%"
+    return f"{'+' if t['value'] > 0 else '−'}{num(abs(t['value']), 2)}%"
 
 
 def rule_break_even(ctx: Context) -> tuple[dict[str, Any], dict[str, Any] | None]:

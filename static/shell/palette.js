@@ -12,6 +12,7 @@ import { icon } from '../ui/icons.js';
 import { reducedMotion } from '../ui/motion.js';
 import { revealRequirement } from '../views/requirements.js';
 import { setFixesOpen } from '../views/summary.js';
+import { openFinding } from '../views/econ-panel.js';
 import { fmtRelative } from '../format.js';
 
 let econ = null;                 // son iqtisadi məlumat ('econ:data')
@@ -50,7 +51,8 @@ function collect() {
     });
     const domId = window.EconCore ? window.EconCore.domId : (pre, id) => pre + id;
     for (const f of (econ && econ.result && econ.result.findings) || []) {
-      out.push({ type: 'finding', title: f.title, sub: 'İqtisadi təhlil', go: () => goTarget('panel-iqtisadi', domId('ef-', f.id)) });
+      if (f.summary) continue;
+      out.push({ type: 'finding', title: f.title, sub: 'İqtisadi təhlil', go: () => openFinding(f.id) });
     }
     (econ && econ.questions || []).forEach((q, i) => {
       out.push({ type: 'question', code: 'S' + (i + 1), title: q.text, sub: 'Suallar və sənədlər', go: () => goTarget('panel-suallar', domId('q-', q.id)) });

@@ -15,7 +15,6 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
   const docs = () => ((state.meta && state.meta.economics) || {}).documents || {};
   const qStatuses = () => ((state.meta && state.meta.economics) || {}).question_statuses || {};
 
-  function statusBadge(f) { return toBadge(C.findingBadge(f)); }
 
   /* ── Yükləmə və sorğu ─────────────────────────────────────────────────── */
 
@@ -95,10 +94,7 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
     document.dispatchEvent(new CustomEvent('econ:data', { detail: d }));
     renderSummaryLine(d);
     renderTabCounts(d);
-    renderHead(d);
-    renderTiles(d);
-    renderFindings(d);
-    renderSensitivity(d);
+    // Baner, göstəricilər, risk radarı və tapıntılar — views/econ-panel.js ('econ:data' hadisəsi ilə).
     renderRejected(d);
     renderQuestions(d);
     renderEvidence(d);
@@ -135,208 +131,12 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
     if (typeof layoutTabs === 'function') layoutTabs();
   }
 
-  function renderHead(d) {
-    const risk = $('econ-risk');
-    const stateLine = $('econ-state');
-    const run = $('econ-run');
-    if (!risk) return;
-    risk.replaceChildren();
-    run.hidden = !d || d.state === 'yoxdur' || state.demo;
-    run.disabled = d && d.state === 'isleyir';
-    $('econ-run-label').textContent = d && d.result ? 'Yenidən hesabla' : 'İqtisadi təhlili başlat';
-    run.title = d && d.result ? 'Qaydalar saxlanmış yerlərlə yenidən hesablanır (model çağırılmır)' : '';
-    const fresh = $('econ-fresh');
-    fresh.hidden = run.hidden || !(d && d.result);
-    fresh.disabled = run.disabled;
-    const notes = $('econ-notes');
-    notes.hidden = !(d && d.result && d.result.notes);
-    notes.textContent = d && d.result && d.result.notes ? 'Qeyd: ' + d.result.notes : '';
-    stateLine.textContent = C.stateText(d, formatDate);
-    if (!d || d.state === 'yoxdur') return;
-    if (d.result) {
-      const r = C.RISK[d.result.risk.level] || C.RISK.orta;
-      const pill = el('span', 'statuspill statuspill--' + r.tone);
-      const dot = el('span', 'statuspill__dot');
-      dot.setAttribute('aria-hidden', 'true');
-      pill.append(dot, el('span', null, 'Risk səviyyəsi: ' + r.label));
-      risk.append(pill, el('span', 'econhead__why', (d.result.risk.reasons || []).join('; ')));
-    }
-  }
-
-  function tile(title, value, unit, sub, hint) {
-    const box = el('div', 'stat stat--static');
-    box.title = hint || '';
-    const v = el('span', 'stat__value', value);
-    v.append(el('span', 'stat__unit', ' ' + unit));
-    box.append(el('span', 'stat__title', title), v, el('span', 'stat__sub', sub));
-    return box;
-  }
-
-  function renderTiles(d) {
-    const host = $('econ-tiles');
-    if (!host) return;
-    host.replaceChildren();
-    if (!d || !d.result) return;
-    host.append(...C.tiles(d.result.counts).map((t) => tile(t.title, t.value, t.unit, t.sub, t.hint)));
-  }
-
-  function numbersTable(numbers) {
-    const wrap = el('div', 'tablewrap');
-    const table = el('table', 'table table--compact enums');
-    const body = el('tbody');
-    numbers.forEach((n) => {
-      const tr = el('tr');
-      const th = el('th', null, n.label);
-      th.scope = 'row';
-      const src = el('td', 'enums__src enums__src--' + ((n.source || {}).kind || ''), C.sourceText(n.source));
-      tr.append(th, el('td', 'num', n.text || ''), src);
-      body.append(tr);
-    });
-    table.append(body);
-    wrap.append(table);
-    return wrap;
-  }
-
-  function questionFor(f) {
-    return ((E.data && E.data.questions) || []).find((q) => q.finding_id === f.id);
-  }
-
   function docStatus(docType, list) {
     const li = el('li');
     li.append(el('span', null, docs()[docType] || docType), document.createTextNode(' — '));
     if (list && list.length) li.append(el('span', 'docok', '✓ ' + list.map((x) => x.file_name).join(', ')));
     else li.append(el('span', 'docwait', 'Gözlənilir'));
     return li;
-  }
-
-  function findingItem(f) {
-    const li = el('li', 'efinding efinding--' + f.status + (f.severity ? ' efinding--' + f.severity : ''));
-    li.id = C.domId('ef-', f.id);
-    const head = el('div', 'efinding__head');
-    head.append(statusBadge(f), el('h3', 'efinding__title', f.title), el('span', 'fix__code', C.GROUP[f.group] || f.group));
-    li.append(head);
-    const body = el('dl', 'fix__body');
-    const row = (label, value) => {
-      if (!value) return;
-      const wrap = el('div', 'fix__row');
-      const dd = el('dd');
-      if (typeof value === 'string') dd.textContent = value; else dd.append(value);
-      wrap.append(el('dt', null, label), dd);
-      body.append(wrap);
-    };
-    row('Nə tapıldı', f.result);
-    row('Düstur', f.formula);
-    if (f.numbers && f.numbers.length) row('Rəqəmlər', numbersTable(f.numbers));
-    const q = questionFor(f);
-    if (f.question) {
-      const box = el('div');
-      box.append(el('p', 'efinding__q', q ? q.text : f.question));
-      if (q) {
-        const go = el('button', 'fix__inline', 'Suallar tabında: ' + (qStatuses()[q.status] || q.status));
-        go.type = 'button';
-        go.addEventListener('click', () => { selectTab('panel-suallar', true); focusQuestion(q.id); });
-        box.append(go);
-      }
-      row('Sual', box);
-    }
-    if (C.answerForm(f) === 'sened') {
-      const list = el('ul', 'efinding__docs');
-      f.documents.forEach((dt) => list.append(docStatus(dt, (f.documents_status || {})[dt])));
-      row('Tələb olunan sənəd', list);
-    } else if (C.answerForm(f) === 'yazili') {
-      row('Cavab', el('span', 'answer--written', C.WRITTEN_ANSWER));
-    }
-    li.append(body);
-    if (f.documents && f.documents.length && !state.demo) {
-      const b = el('button', 'btn btn--small');
-      b.type = 'button';
-      b.append(icon('upload'), el('span', null, 'Sənəd yüklə'));
-      b.setAttribute('aria-label', 'Sənəd yüklə: ' + f.title);
-      b.addEventListener('click', () => pickAndUpload({ question_id: q && q.id, doc_type: f.documents[0] }));
-      li.append(b);
-    }
-    return li;
-  }
-
-  function renderFindings(d) {
-    const host = $('econ-findings');
-    const chips = $('econ-filters');
-    if (!host) return;
-    host.replaceChildren();
-    chips.replaceChildren();
-    if (!d || !d.result) return;
-    C.findingFilterCounts(d.result.findings).forEach(({ id, label, count }) => {
-      const b = el('button', 'chip' + (E.filter === id ? ' is-on' : ''));
-      b.type = 'button';
-      b.setAttribute('aria-pressed', E.filter === id ? 'true' : 'false');
-      b.append(document.createTextNode(label + ' '), el('span', 'chip__count', String(count)));
-      b.addEventListener('click', () => { E.filter = id; renderFindings(E.data); });
-      chips.append(b);
-    });
-    const shown = C.filterFindings(d.result.findings, E.filter);
-    host.append(...shown.map(findingItem));
-    if (!shown.length) host.append(el('li', 'empty', 'Bu süzgəcdə tapıntı yoxdur.'));
-  }
-
-  function renderSensitivity(d) {
-    const sec = $('econ-sens');
-    if (!sec) return;
-    const sens = d && d.result && d.result.sensitivity;
-    const rows = (sens && sens.scenarios) || [];
-    sec.hidden = !rows.length;
-    if (!rows.length) return;
-    const aggregate = d.result.findings.find((f) => f.id === 'hessasliq');
-    const view = C.sensitivityView(sens, aggregate);
-
-    const badgeBox = $('econ-sens-badge');
-    badgeBox.replaceChildren();
-    badgeBox.hidden = !view.badge;
-    if (view.badge) {
-      badgeBox.className = 'sens__badge sens__badge--' + view.badge.tone;
-      badgeBox.append(icon(view.badge.tone === 'ok' ? 'check' : 'alert'), el('span', null, view.badge.label));
-    }
-    $('econ-sens-title').textContent = view.title;
-    const lead = $('econ-sens-lead');
-    lead.textContent = view.subtitle;
-    lead.hidden = !view.subtitle;
-
-    $('econ-sens-body').replaceChildren(...view.rows.map((r) => {
-      const tr = el('tr', r.base ? 'sens__base' : r.negative ? 'sens__neg' : null);
-      const th = el('th', null, r.title);
-      th.scope = 'row';
-      if (r.formula) th.title = r.formula;
-      if (r.reason) {
-        const td = el('td', null, r.reason);
-        td.colSpan = 4;
-        tr.append(th, td);
-        return tr;
-      }
-      const npvCell = el('td', 'num', r.npv);
-      if (r.negative) npvCell.append(el('span', 'sr-only', ' (mənfi)'));
-      tr.append(th, npvCell, el('td', 'num', r.delta), el('td', 'num', r.irr), el('td', 'num', r.threshold));
-      return tr;
-    }));
-
-    // Tornado: ΔNPV — mərkəzdən sola (azalma) və sağa (artım); rəqəm mətnlə də yazılır.
-    $('econ-tornado').replaceChildren(...C.tornado(rows).map((s) => {
-      const r = el('div', 'tornado__row');
-      const track = el('div', 'tornado__track');
-      const bar = el('span', 'tornado__bar is-' + s.direction + (s.negative ? ' is-negative' : ''));
-      bar.style.width = s.widthPct + '%';
-      track.append(bar);
-      track.setAttribute('aria-hidden', 'true');
-      r.append(el('span', 'tornado__label', s.title), track,
-        el('span', 'tornado__value', C.mln(s.delta, true)));
-      return r;
-    }));
-
-    // "Necə hesablanıb" — hər ssenarinin düsturu, sıfır həddinin mənası və sadələşdirmə (həqiqi metod).
-    $('econ-sens-method').replaceChildren(
-      el('li', null, 'Baza — planın öz pul axını (FCFF) ilə kodun hesabı; diskont dərəcəsi planda göstərilən.'),
-      ...rows.map((s) => el('li', null, (view.rows.find((x) => x.id === s.id) || {}).title + ': ' + s.formula + '.')),
-      el('li', null, 'Sıfır həddi: qiymət, xammal və capex üçün — baza NPV / təsir olunan axının cari dəyəri; '
-        + 'gücdən istifadə üçün — NPV-nin sıfıra endiyi istifadə səviyyəsi (praktiki gücün faizi); gecikmə üçün hədd yoxdur.'));
-    $('econ-sens-note').textContent = sens.assumption || '';
   }
 
   function renderRejected(d) {
@@ -640,5 +440,5 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 
   // upload: Nəticə tabındakı "Ayrıca sənədlər" də buradan yükləyir (req_code ilə).
-  window.Econ = { load, prepareForPrint, upload };
+  window.Econ = { load, prepareForPrint, upload, focusQuestion };
 })();

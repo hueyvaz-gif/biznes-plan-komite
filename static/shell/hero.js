@@ -12,10 +12,11 @@ const TONE = { hazir: 'ok', duzelis: 'warn', hazir_deyil: 'fail', giris_xetasi: 
 const RISK_TONE = { yuksek: 'fail', orta: 'warn', asagi: 'ok' };
 
 /** Ən təsirli tapıntı: sıfır həddi ən kiçik olan ssenari — cümlə kodla qurulur. */
+const pctOf = (v) => fmtPct(Math.abs(v), { points: true, decimals: Math.abs(v) < 1 ? 2 : 1 });
 const THRESHOLD_TEXT = {
-  price_: (v) => `Satış qiyməti ${fmtPct(Math.abs(v), { points: true })} düşsə`,
-  raw_: (v) => `Xammal ${fmtPct(Math.abs(v), { points: true })} bahalaşsa`,
-  capex_: (v) => `İnvestisiya ${fmtPct(Math.abs(v), { points: true })} artsa`,
+  price_: (v) => `Satış qiyməti ${pctOf(v)} düşsə`,
+  raw_: (v) => `Xammal ${pctOf(v)} bahalaşsa`,
+  capex_: (v) => `İnvestisiya ${pctOf(v)} artsa`,
   capacity_: (v) => `Gücdən istifadə ${fmtPct(v, { points: true })}-dən aşağı düşsə`,
 };
 export function riskSentence(result) {

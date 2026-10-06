@@ -60,7 +60,7 @@ test('göstəricilər: heç nə yoxlanılmayıbsa "0/0" yox, "—"; alt mətn ya
     hessasliq: { negative: 4, total: 5, skip: 0 } };
   const [d, r, h] = C.tiles(counts);
   assert.equal(d.value, '10/15');
-  assert.equal(d.sub, '5 bayraq · 1 tətbiq edilmir');
+  assert.equal(d.sub, '5 diqqət tələb edir · 1 tətbiq edilmir');
   assert.equal(r.value, '—');
   assert.equal(r.unit, 'yoxlanılmayıb');
   assert.equal(r.sub, '12 yoxlanıla bilməz');
@@ -145,7 +145,7 @@ test('"əvvəl/sonra" tarixçəsi: yükləmə, silmə, dəyişiklik yoxdursa', (
     changes: [{ title: 'Excel', before: null, after: { status: 'flag', severity: 'orta' } },
       { title: 'Gəlir', before: { status: 'ok' }, after: null }] }, fmtDate);
   assert.equal(up.head, 'T(A) — yükləndi: m.xlsx · risk: orta → yüksək');
-  assert.deepEqual(up.lines, ['Excel: yox idi → bayraq (orta)', 'Gəlir: uyğun → çıxarıldı']);
+  assert.deepEqual(up.lines, ['Excel: yox idi → diqqət tələb edir (orta)', 'Gəlir: uyğun → çıxarıldı']);
   const del = C.historyEntry({ at: 'B', trigger: { kind: 'sened_silindi', file_name: 'm.xlsx' }, changes: [] }, fmtDate);
   assert.equal(del.head, 'T(B) — silindi: m.xlsx · risk: — → —');
   assert.deepEqual(del.lines, ['Tapıntılar dəyişmədi.']);
@@ -181,9 +181,9 @@ test('həssaslıq bloku: maketdəki başlıq, alt cümlə, mln formatı və sıf
   assert.equal(v.subtitle, 'Satış qiyməti cəmi 0,9% düşsə və ya xammal 1,3% bahalaşsa, NPV sıfıra enir.');
   assert.deepEqual(v.rows.map((r) => [r.title, r.npv, r.delta, r.irr, r.threshold]), [
     ['Baza', '1,94 mln', '—', '11,8%', '—'],
-    ['Satış qiyməti −10%', '−18,88 mln', '−20,82 mln', '—', '−0,9%'],
+    ['Satış qiyməti −10%', '−18,88 mln', '−20,82 mln', '—', '−0,93%'],
     ['Xammal +10%', '−13,02 mln', '−14,96 mln', '3,1%', '+1,3%'],
-    ['Gücdən istifadə 80%', '−2,30 mln', '−4,25 mln', '7,8%', '~88%'],
+    ['Gücdən istifadə 80%', '−2,30 mln', '−4,25 mln', '7,8%', '88,4%'],
     ['Capex +15%', '−0,27 mln', '−2,21 mln', '9,8%', '+13%'],
     ['1 il gecikmə', '0,43 mln', '−1,52 mln', '10,3%', '—'],
   ]);
