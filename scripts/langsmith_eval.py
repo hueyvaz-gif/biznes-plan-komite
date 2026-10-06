@@ -129,7 +129,7 @@ CLARITY_SCENARIOS = [
 
 
 def req_counts(items: list[dict]) -> dict:
-    """static/app.js → reqCounts() ilə EYNİ qayda (bütün ekranlarda istifadə olunan)."""
+    """static/core/dom.js → reqCounts() ilə EYNİ qayda (bütün ekranlarda istifadə olunan)."""
     n = lambda st: sum(1 for i in items if i.get("status") == st)  # noqa: E731
     answered, partial, missing, document = n("var"), n("natamam"), n("yoxdur"), n("sened")
     evaluated = answered + partial + missing

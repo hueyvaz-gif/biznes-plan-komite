@@ -1,12 +1,9 @@
-/* İqtisadi təhlil və "Suallar və sənədlər" tabları — GET /api/checks/{id}/economics.
- *
- * Burada heç nə hesablanmır: server qaydalarının nəticəsi göstərilir. Hər rəqəmin yanında mənbəyi
- * yazılır — sənəddən (yer + hərfi sitat), kodun hesabından (düstur), benchmark-dan (mənbə + tarix)
- * və ya yüklənmiş əlavə sənəddən.
- * Göstərmə məntiqi (sıra, süzgəc, mətnlər) static/econ-core.js-dədir (EconCore, Node testləri ilə);
- * bu fayl yalnız DOM-u qurur. app.js-in köməkçilərini işlədir: $, el, icon, badge, api, state, selectTab,
- * announce, formatDate, formatAz.
- */
+/* İqtisadi təhlil və "Suallar və sənədlər" tabları (keçmiş static/economics.js). */
+import { api } from '../core/api.js';
+import { $, announce, badge, el, formatAz, formatDate, icon } from '../core/dom.js';
+import { state } from '../core/state.js';
+import { layoutTabs, selectTab } from '../shell/tabs.js';
+
 (function () {
   'use strict';
 
