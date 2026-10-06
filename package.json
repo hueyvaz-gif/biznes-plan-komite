@@ -1,0 +1,16 @@
+{
+  "name": "biznes-plan-komite-ui",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Frontend alətləri: CSS auditi, Node unit testləri, Playwright e2e/vizual/a11y testləri",
+  "scripts": {
+    "css:audit": "node scripts/css-audit.mjs",
+    "test:js": "node --test tests/js/*.test.js",
+    "test:e2e": "playwright test",
+    "shots": "node scripts/ui-shots.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "1.63.0"
+  }
+}

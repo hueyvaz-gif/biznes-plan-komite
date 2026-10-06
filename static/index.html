@@ -10,6 +10,11 @@
   <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <script>
+    /* Tema: localStorage-dakı seçim (light|dark) ilk boyamadan əvvəl tətbiq olunur — parıltı olmasın. "Avto" = atribut yoxdur. */
+    try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="/static/tokens.css">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
