@@ -12,6 +12,7 @@ import { loadHistory, renderNavCurrent } from './shell/sidebar.js';
 import { selectTab, wireTabs } from './shell/tabs.js';
 import { wireHero } from './shell/hero.js';
 import { wireShortcuts } from './shell/palette.js';
+import { wireSummary } from './views/summary-panel.js';
 import { closeNav, openNav, setOnline, showView } from './shell/views.js';
 import { AG, renderAgentTable } from './views/debug-log.js';
 import { setFinanceFilter } from './views/finance.js';
@@ -47,6 +48,7 @@ async function init() {
   wireTabs();
   wireHero();
   wireShortcuts();
+  wireSummary();
   revealOnce(document.querySelector('.explain__art'));
   $('upload-form').addEventListener('submit', submitCheck);
   $('extra-add').addEventListener('click', () => $('extra-input').click());
@@ -96,15 +98,7 @@ async function init() {
   window.addEventListener('beforeprint', prepareForPrint);        // Ctrl+P ilə də
   window.addEventListener('afterprint', () => setFixesOpen(false));  // çapdan sonra yenə ilk 6 bənd
   window.addEventListener('resize', () => $('review-items').querySelectorAll('textarea').forEach(fitArea));
-  $('fixes-toggle').addEventListener('click', () => {
-    setFixesOpen($('fixes-toggle').getAttribute('aria-expanded') !== 'true');
-  });
   $('sum-retry').addEventListener('click', () => $('retry-groups-btn').click());
-  $('about-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    $('about').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-    $('about').focus({ preventScroll: true });
-  });
   document.querySelectorAll('.golink').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.goto, true)));
   $('ag-filter').addEventListener('change', (e) => { AG.filter = e.target.value; renderAgentTable(); });
   $('ag-errors').addEventListener('change', (e) => { AG.errorsOnly = e.target.checked; renderAgentTable(); });

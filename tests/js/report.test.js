@@ -181,3 +181,27 @@ test('xam boş yer qeydi oxunaqlı olur', () => {
   assert.equal(R.cleanMissing('Sahə [MƏLUMAT LAZIMDIR: sahə] kimi boş qalıb — 4.3-də də qeyd olunur ki, bu [MƏLUMAT LAZIMDIR].'),
     'Sahə boş qalıb.');
 });
+
+test('buildSentence: nəticə + səbəb, saylar düzəliş siyahısından', () => {
+  const fx = (severity, topic) => ({ severity, topic });
+  const report = { fixes: [fx('duzelis', 'Şirkətin rekvizitləri'), fx('duzelis', 'Avadanlıq və təchizatçılar'),
+    fx('duzelis', 'VÖEN və ünvan'), fx('deqiqlesdir', 'Mənbələrin cəmi')] };
+  const overview = { top: report.fixes.slice(0, 3).map((f) => ({ topic: f.topic })) };
+  assert.equal(R.buildSentence('duzelis', report, overview),
+    'Plan təqdimata 3 düzəlişdən sonra hazır olacaq. Ən vacibi: şirkətin rekvizitləri; avadanlıq və təchizatçılar; VÖEN və ünvan.');
+  assert.equal(R.buildSentence('hazir', { fixes: [] }, { top: [] }), 'Plan təqdimata hazırdır.');
+  assert.equal(R.buildSentence('hazir', { fixes: [fx('deqiqlesdir', 'x')] }, { top: [] }),
+    'Plan təqdimata hazırdır. 1 bəndin dəqiqləşdirilməsi tövsiyə olunur.');
+  assert.equal(R.buildSentence('hazir_deyil', { fixes: [fx('kritik', 'Maliyyələşmə mənbələri'), fx('duzelis', 'b')] }, { top: [] }),
+    'Plan hazır deyil: 1 bloklayan problem var. Əvvəlcə: maliyyələşmə mənbələri.');
+  assert.equal(R.buildSentence('duzelis', { fixes: [fx('deqiqlesdir', 'Mənbələr')] }, { top: [{ topic: 'Mənbələr' }] }),
+    'Plan təqdimata 1 bənd dəqiqləşdiriləndən sonra hazır olacaq. Ən vacibi: mənbələr.');
+});
+
+test('joinAz', () => {
+  assert.equal(R.joinAz([]), '');
+  assert.equal(R.joinAz(['a']), 'a');
+  assert.equal(R.joinAz(['a', 'b']), 'a və b');
+  assert.equal(R.joinAz(['a', 'b', 'c']), 'a, b və c');
+  assert.equal(R.joinAz(['a və b', 'c']), 'a və b; c');
+});

@@ -507,9 +507,44 @@
     }));
   }
 
+  /* ── Bir cümləlik nəticə (Nəticə tabının başı) ───────────────────────── */
+
+  /** "a", "a və b", "a, b və c". Elementin özündə "və" və ya vergül varsa — "a; b; c" (oxunaqlı qalsın). */
+  function joinAz(list) {
+    if (list.length <= 1) return list.join('');
+    if (list.some((x) => / və |,/.test(x))) return list.join('; ');
+    return list.slice(0, -1).join(', ') + ' və ' + list[list.length - 1];
+  }
+
+  /**
+   * Nəticə + səbəb, bir-iki cümlə. Hər say report.fixes-dən (siyahı ilə eyni mənbə), mövzular overview.top-dan.
+   *   hazir        → "Plan təqdimata hazırdır." (+ dəqiqləşdirmə tövsiyəsi)
+   *   duzelis      → "Plan təqdimata 9 düzəlişdən sonra hazır olacaq. Ən vacibi: a, b və c."
+   *   hazir_deyil  → "Plan hazır deyil: 2 bloklayan problem var. Əvvəlcə: a və b."
+   */
+  function buildSentence(verdict, report, overview) {
+    const fixes = (report && report.fixes) || [];
+    const n = fixes.filter((f) => f.severity === 'kritik' || f.severity === 'duzelis').length;
+    const c = fixes.filter((f) => f.severity === 'deqiqlesdir').length;
+    const top = ((overview && overview.top) || []).map((t) => lowerFirst(t.topic));
+    if (verdict === 'hazir' || (!n && !c)) {
+      return 'Plan təqdimata hazırdır.' + (c ? ' ' + c + ' bəndin dəqiqləşdirilməsi tövsiyə olunur.' : '');
+    }
+    if (verdict === 'hazir_deyil') {
+      const blockers = fixes.filter((f) => f.severity === 'kritik').map((f) => lowerFirst(f.topic));
+      const k = blockers.length;
+      return 'Plan hazır deyil' + (k ? ': ' + k + ' bloklayan problem var. Əvvəlcə: ' + joinAz(blockers.slice(0, 3)) + '.'
+        : '.' + (top.length ? ' Ən vacibi: ' + joinAz(top) + '.' : ''));
+    }
+    const head = n ? 'Plan təqdimata ' + n + ' düzəlişdən sonra hazır olacaq.'
+      : 'Plan təqdimata ' + c + ' bənd dəqiqləşdiriləndən sonra hazır olacaq.';
+    return head + (top.length ? ' Ən vacibi: ' + joinAz(top) + '.' : '');
+  }
+
   const api = {
     REQ_LABEL, FIN_LABEL, SEVERITY_LABEL, reqCounts, resolveCarried, firstSentence, placeholderText,
     cleanMissing, asShortfall, actionFor, locationLabel, buildReport, buildOverview, financeCounts, financeRows, poss, loc,
+    buildSentence, joinAz,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Report = api;

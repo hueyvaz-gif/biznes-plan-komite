@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/ui/ui.css">
   <link rel="stylesheet" href="/static/shell/shell.css">
+  <link rel="stylesheet" href="/static/views/views.css">
 </head>
 <body>
 <a class="skip-link" href="#main">Əsas məzmuna keç</a>
@@ -465,66 +466,84 @@
 
         <!-- Nəticə -->
         <div class="panel panel--report" id="panel-xulase" role="tabpanel" aria-labelledby="tab-xulase" tabindex="0">
-          <article class="report">
-            <section class="report__sec" aria-labelledby="sum-title">
-              <h2 class="report__h" id="sum-title">Yoxlamanın nəticəsi</h2>
-              <div class="report__lead" id="sum-text"></div>
-              <p class="overview__econ" id="sum-econ" hidden></p>
+          <article class="report sumv">
+            <!-- 1. Bir cümləlik nəticə + 3 göstərici (views/summary.js; hər rəqəm API-dən) -->
+            <section class="sumv__lead" aria-labelledby="sum-title">
+              <h2 class="sumv__eyebrow" id="sum-title">Yoxlamanın nəticəsi</h2>
+              <p class="sumv__sentence" id="sum-sentence"></p>
+              <div class="sumv__tiles" id="sum-tiles"></div>
+              <div class="report__notice" id="sum-unchecked" role="status" hidden>
+                <p id="sum-unchecked-text"></p>
+                <button class="btn btn--small" type="button" id="sum-retry" hidden>
+                  <span class="icon" data-icon="refresh" aria-hidden="true"></span><span id="sum-retry-label">Bu qrupu yenidən yoxla</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 2. Düzəliş planı: checklist (işarə lokal qeyddir, statusu dəyişmir) -->
+            <section class="sumv__sec" id="fixplan" aria-labelledby="fix-title">
+              <header class="sumv__head">
+                <div>
+                  <h2 class="sumv__h" id="fix-title">Düzəliş planı</h2>
+                  <p class="sumv__sub" id="fix-sub"></p>
+                </div>
+                <div class="fixprog" id="fix-progress" hidden>
+                  <span class="fixprog__text" id="fix-progress-text" aria-live="polite"></span>
+                  <span class="fixprog__bar" id="fix-progress-bar"></span>
+                </div>
+              </header>
+              <ol class="fixlist" id="fixes"></ol>
+              <div class="fixlist__more" id="fixes-more-wrap">
+                <ol class="fixlist" id="fixes-more" inert></ol>
+              </div>
+              <button class="btn fixlist__toggle" type="button" id="fixes-toggle" aria-expanded="false" aria-controls="fixes-more" hidden></button>
+              <div id="fixes-empty-host"></div>
+            </section>
+
+            <!-- 3. Ayrıca sənədlər: yükləmə + yoxlama nəticəsi -->
+            <section class="sumv__sec" id="docs-sec" aria-labelledby="docs-title" hidden>
+              <header class="sumv__head">
+                <div>
+                  <h2 class="sumv__h" id="docs-title">Ayrıca təqdim ediləcək sənədlər</h2>
+                  <p class="sumv__sub">Bu tələblər planın mətnində yoxlanılmır — sənəd ayrıca yüklənir və yoxlanılır.</p>
+                </div>
+                <span class="fixprog__text" id="docs-progress"></span>
+              </header>
+              <ul class="doclist" id="docs-list"></ul>
+            </section>
+
+            <section class="sumv__sec" id="na-sec" aria-labelledby="na-title" hidden>
+              <h2 class="sumv__h sumv__h--sm" id="na-title">Tətbiq edilmir</h2>
+              <ul class="nalist" id="na-list"></ul>
+            </section>
+
+            <!-- 4. Maliyyə xülasəsi -->
+            <section class="sumv__sec" id="finsum-sec" aria-labelledby="finsum-title">
+              <header class="sumv__head">
+                <div>
+                  <h2 class="sumv__h" id="finsum-title">Maliyyə xülasəsi</h2>
+                  <p class="sumv__sub">“Uyğun” — plandakı rəqəm planın öz cədvəllərindən yenidən hesablanmış rəqəmlə üst-üstə düşür.
+                    Bu, layihənin sərfəli olduğunu göstərmir.</p>
+                </div>
+                <button class="btn btn--small golink" type="button" data-goto="panel-maliyye">Maliyyə tabı
+                  <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
+              </header>
+              <div id="finsum-host"></div>
+            </section>
+
+            <!-- 5. Yoxlama haqqında (default yığılı) -->
+            <section class="sumv__sec about" id="about" aria-labelledby="about-title" tabindex="-1">
+              <h2 class="sr-only" id="about-title">Yoxlama haqqında</h2>
               <p class="report__auto">
                 <span class="icon" data-icon="info" aria-hidden="true"></span>
                 <span><span id="sum-auto">Avtomatik yoxlama nəticəsidir. İnsan tərəfindən təsdiqlənməyib.</span>
                   <a class="report__link" href="#about" id="about-link">Yoxlama haqqında</a></span>
               </p>
-              <div class="report__notice" id="sum-unchecked" role="status" hidden>
-                <p id="sum-unchecked-text"></p>
-                <button class="btn btn--small" type="button" id="sum-retry" hidden>
-                  <span class="icon" data-icon="refresh" aria-hidden="true"></span>Bu qrupları yenidən yoxla
+              <div class="about__disc" id="about-disc">
+                <button class="about__btn" type="button" id="about-toggle" aria-expanded="false" aria-controls="about-body">
+                  <span class="icon" data-icon="chevronRight" aria-hidden="true"></span>Yoxlama haqqında: nə yoxlanılır, AI-ın rolu, əhatə
                 </button>
-              </div>
-            </section>
-
-            <section class="report__sec" aria-labelledby="fix-title">
-              <h2 class="report__h" id="fix-title">Nə düzəltmək lazımdır</h2>
-              <p class="report__sub" id="fix-sub"></p>
-              <ol class="fixes" id="fixes"></ol>
-              <ol class="fixes" id="fixes-more" hidden></ol>
-              <button class="report__more" type="button" id="fixes-toggle" aria-expanded="false" aria-controls="fixes-more" hidden></button>
-              <p class="report__empty" id="fixes-empty" hidden>Düzəliş tələb edən bənd tapılmadı.</p>
-              <div class="report__aside" id="fix-aside"></div>
-            </section>
-
-            <section class="report__sec" aria-labelledby="finsum-title">
-              <h2 class="report__h" id="finsum-title">Maliyyə yoxlaması</h2>
-              <p class="report__sub">“Uyğun” — plandakı rəqəm planın öz cədvəllərindən yenidən hesablanmış
-                rəqəmlə üst-üstə düşür. Bu, layihənin sərfəli olduğunu göstərmir.</p>
-              <p class="report__empty" id="finsum-empty" hidden>Maliyyə yoxlaması aparılmayıb.</p>
-              <div class="tablewrap">
-                <table class="fintable" id="finsum">
-                  <caption class="sr-only">Maliyyə yoxlamasının nəticəsi</caption>
-                  <thead><tr>
-                    <th scope="col">Göstərici</th><th scope="col" class="num">Planda</th>
-                    <th scope="col" class="num">Yenidən hesablanmış</th><th scope="col">Nəticə</th>
-                    <th scope="col"><span class="sr-only">Hesablama və mənbə</span></th>
-                  </tr></thead>
-                  <tbody id="finsum-body"></tbody>
-                </table>
-              </div>
-            </section>
-
-            <nav class="report__links" aria-label="Ətraflı bölmələr">
-              <button class="golink" type="button" data-goto="panel-teleb">
-                <span class="golink__title">Bütün tələblər</span><span class="golink__sub" id="go-teleb-sub">Hər tələbin statusu, sitatı və tələblər xəritəsi</span>
-                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
-              <button class="golink" type="button" data-goto="panel-maliyye">
-                <span class="golink__title">Maliyyə — ətraflı</span><span class="golink__sub">Hesablama qaydaları, mənbələr və qrafiklər</span>
-                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
-              <button class="golink" type="button" data-goto="panel-bosyer">
-                <span class="golink__title">Doldurulmamış yerlər</span><span class="golink__sub" id="go-bosyer-sub">Sənəddə boş qalan yerlərin siyahısı</span>
-                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
-            </nav>
-
-            <section class="report__sec about" id="about" aria-labelledby="about-title" tabindex="-1">
-              <h2 class="report__h" id="about-title">Yoxlama haqqında</h2>
+                <div class="about__panel" id="about-body"><div class="about__inner" inert>
               <h3 class="about__h">Nə yoxlanılır</h3>
               <p>Tətbiq planın mətnini standart tələblər siyahısı ilə tutuşdurur, maliyyə rəqəmlərini planın
                 öz cədvəllərindən yenidən hesablayır və sənəddə doldurulmamış yerləri tapır.</p>
@@ -548,6 +567,8 @@
               <p id="about-result">Avtomatik yoxlama nəticəsidir. İnsan ekspert və ya komitə tərəfindən təsdiqlənməyib.</p>
               <h3 class="about__h">Yoxlamanın əhatəsi</h3>
               <ul class="scope__list" id="scope-list"></ul>
+                </div></div>
+              </div>
             </section>
           </article>
         </div>
@@ -770,6 +791,7 @@
         <!-- Müqayisə -->
         <div class="panel" id="panel-muqayise" role="tabpanel" aria-labelledby="tab-muqayise" tabindex="0" hidden>
           <h2 class="print-only print-title">Əvvəlki versiya ilə müqayisə</h2>
+          <p class="cmp-rules" id="cmp-rules" hidden></p>
           <p class="empty" id="cmp-empty" hidden></p>
           <div id="cmp-body"></div>
           <section class="econsec" id="econ-history" hidden aria-labelledby="econ-history-title">

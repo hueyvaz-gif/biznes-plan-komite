@@ -639,5 +639,6 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 
-  window.Econ = { load, prepareForPrint };
+  // upload: Nəticə tabındakı "Ayrıca sənədlər" də buradan yükləyir (req_code ilə).
+  window.Econ = { load, prepareForPrint, upload };
 })();

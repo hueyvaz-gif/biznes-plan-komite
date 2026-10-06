@@ -1,16 +1,17 @@
 /* Nəticə tabı: qısa nəticə, düzəliş siyahısı, tələblər xəritəsi, maliyyə zolağı. */
-import { $, badge, el, formatAz, formatValue, icon, planName, reqCounts, reqSummary, setHidden, setText, writtenDecimals } from '../core/dom.js';
+import { $, el, formatAz, formatValue, planName, reqCounts, reqSummary, setHidden, setText } from '../core/dom.js';
 import { VERDICT_TONE } from '../core/labels.js';
 import { state } from '../core/state.js';
 import { closeDetail } from '../shell/detail.js';
 import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
 import { renderHero } from '../shell/hero.js';
+import { renderSummaryPanel, setFixesOpen } from './summary-panel.js';
 import { renderComparison } from './compare.js';
 import { AG, loadEvents, renderAgents } from './debug-log.js';
 import { renderExtraResults } from './extras.js';
 import { openFinanceDetail, renderCharts, renderFinance, setFinanceFilter } from './finance.js';
 import { openPlaceholderDetail, renderPlaceholders } from './placeholders.js';
-import { openRequirementDetail, renderCoverage, renderRequirements, reqMeta, setRequirementFilter, standardItems } from './requirements.js';
+import { openRequirementDetail, renderCoverage, renderRequirements, reqMeta, setRequirementFilter } from './requirements.js';
 
 /* ── Nəticə ─────────────────────────────────────────────────────────────── */
 
@@ -49,6 +50,7 @@ function renderResults(check) {
   safely('əlavə tələblər', () => renderExtraResults(p));
   safely('boş yerlər', () => renderPlaceholders(p.ingest.placeholders || []));
   safely('müqayisə', () => renderComparison(p.comparison));
+  safely('status tarixçəsi', () => renderRulesNote(check));
   safely('tab nişanları', () => renderTabCounts(p));
   safely('iqtisadi təhlil', () => window.Econ && window.Econ.load(check));
   loadEvents(check.id).then(() => { if (state.check && state.check.id === check.id) renderAgents(); });
@@ -58,7 +60,6 @@ function renderResults(check) {
 }
 /* ── Nəticə: qısa nəticə, vahid düzəliş siyahısı, yığcam maliyyə (static/report.js) ── */
 
-const FIX_SHOW = 6;
 /** Başlıq: sənədin hazırlıq statusu (sadə etiket) və yoxlamanın icra vəziyyəti — ayrı. */
 function renderStatusLine(check) {
   const tone = VERDICT_TONE[check.verdict] || 'skip';
@@ -81,192 +82,33 @@ function renderReport(check, p) {
   // Nəticə bloku — başlıq, bloklayan problem, göstəricilər; hamısı aşağıdakı siyahı ilə eyni mənbədən.
   const overview = Report.buildOverview(check, check.result || {}, report, $('res-status-label').textContent);
   state.overview = overview;
-  renderOverview(overview);
-  // Statusun yenidən hesablanması daxili tarixçədir — "Yoxlama haqqında" bölməsində göstərilir.
-  const rules = (check.result || {}).rules || {};
-  const before = rules.reevaluated && rules.previous_verdict && rules.previous_verdict !== check.verdict
-    ? ((state.meta && state.meta.verdicts) || {})[rules.previous_verdict] : null;
-  $('about-result').textContent = 'Avtomatik yoxlama nəticəsidir. İnsan ekspert və ya komitə tərəfindən təsdiqlənməyib.'
-    + (before ? ' Status sonradan yenilənmiş qaydalarla yenidən hesablanıb (əvvəl: “' + before + '”).' : '');
-
   // Yoxlanılmayan hissələr (texniki səbəb) — düzəliş deyil, ayrıca bildiriş.
   const technical = report.unchecked.filter((u) => u.technical);
   const failed = (p.compliance.failed_groups || []);
   $('sum-unchecked').hidden = technical.length === 0;
   if (technical.length) {
-    const groups = [...new Set(technical.map((u) => u.group))].join(', ');
+    const groups = [...new Set(technical.map((u) => u.group))];
     $('sum-unchecked-text').textContent = technical.length + ' tələb texniki səbəbdən yoxlanılmadı ('
-      + groups + '). Bu, sənəddə olmaması demək deyil.';
+      + groups.join(', ') + '). Bu, sənəddə olmaması demək deyil.';
+    setText('sum-retry-label', groups.length > 1 ? 'Bu ' + groups.length + ' qrupu yenidən yoxla' : 'Bu qrupu yenidən yoxla');
   }
   $('sum-retry').hidden = !(failed.length && check.run_state === 'tamamlandi' && !check.demo);
 
-  // Düzəlişlər
-  const fixes = report.fixes;
-  $('fix-sub').textContent = overview.composition;
-  $('fix-sub').hidden = !overview.composition;
-  $('fixes').replaceChildren(...fixes.slice(0, FIX_SHOW).map(fixItem));
-  $('fixes-more').replaceChildren(...fixes.slice(FIX_SHOW).map(fixItem));
-  $('fixes-more').start = FIX_SHOW + 1;
-  setFixesOpen(false);
-  $('fixes-empty').hidden = fixes.length > 0;
-
-  const aside = $('fix-aside');
-  aside.replaceChildren();
-  if (report.notApplicable.length) {
-    const box = el('div', 'aside__row');
-    box.append(el('h3', 'aside__title', 'Tətbiq edilmir'));
-    const list = el('ul', 'aside__list');
-    report.notApplicable.forEach((n) => {
-      const li = el('li');
-      li.append(el('strong', null, n.text), document.createTextNode(' — planda: '),
-        el('q', null, n.quote || ''), el('span', 'fix__code', n.code));
-      list.append(li);
-    });
-    box.append(list);
-    aside.append(box);
-  }
-  if (report.documents.length) {
-    // Status "Suallar və sənədlər" tabında yüklənən fayllardan gəlir (static/economics.js).
-    const box = el('div', 'aside__row');
-    const list = el('ul', 'aside__list docreq');
-    report.documents.forEach((d) => {
-      const li = el('li');
-      li.append(el('span', null, d.text), document.createTextNode(' '), el('span', 'fix__code', d.code),
-        document.createTextNode(' — '));
-      const st = el('span', 'docreq__status', 'Gözlənilir');
-      st.dataset.code = d.code;
-      li.append(st);
-      list.append(li);
-    });
-    box.append(el('h3', 'aside__title', 'Ayrıca təqdim ediləcək sənədlər'), list,
-      el('p', 'docreq__hint', 'Sənədi “Suallar və sənədlər” tabında yükləyin; yüklənmiş sənəd üçün yoxlama nəticəsi göstərilir.'));
-    aside.append(box);
-  }
-
-  // Maliyyə — yığcam cədvəl
-  const rows = Report.financeRows(check.result || {});
-  const checks = p.finance.checks || [];
-  $('finsum').hidden = rows.length === 0;
-  $('finsum-empty').hidden = rows.length > 0;
-  $('finsum-body').replaceChildren(...rows.map((r) => {
-    const c = checks.find((x) => x.id === r.id);
-    const tr = el('tr');
-    const th = el('th', 'finsum__title', r.title);
-    th.scope = 'row';
-    const result = el('td');
-    const cls = r.label === 'Dəqiqləşdirmə' ? 's-warn' : 's-' + r.status;
-    result.append(badge(cls, r.label));
-    const more = el('td', 'finsum__go');
-    const b = el('button', 'btn btn--small finsum__more');
-    b.type = 'button';
-    b.append(el('span', null, 'Ətraflı'), icon('chevronRight'));
-    b.setAttribute('aria-label', r.title + ' — ətraflı: necə hesablandı və mənbə');
-    b.addEventListener('click', () => openFinanceDetail(c, b));
-    more.append(b);
-    tr.append(th, el('td', 'num', formatValue(r.claimed, c, writtenDecimals(p.finance, c))),
-      el('td', 'num', formatValue(r.computed, c)), result, more);
-    return tr;
-  }));
-
-  const std = reqCounts(standardItems());
-  $('go-teleb-sub').textContent = std.total
-    ? std.total + ' tələb: ' + reqSummary(std) : 'Hər tələbin statusu və sitatı';
-  const holes = (p.ingest.placeholders || []).length;
-  $('go-bosyer-sub').textContent = holes ? holes + ' boş yer' : 'Boş yer qalmayıb';
-}
-/** Nəticə bloku: status + saylar, bloklayan problem, kliklənən göstəricilər, ən vacib 3 düzəliş. */
-function renderOverview(o) {
-  const host = $('sum-text');
-  const blocking = el('p', 'overview__block' + (o.blocking.critical ? ' is-critical' : ''), o.blocking.text);
-  const tiles = el('div', 'stats');
-  o.tiles.forEach((t) => {
-    const b = el('button', 'stat stat--' + t.id);
-    b.type = 'button';
-    b.title = t.hint;
-    b.setAttribute('aria-label', t.title + ': ' + t.value + ' ' + t.unit + ', ' + t.sub + '. ' + t.hint + ' Tabı aç.');
-    const value = el('span', 'stat__value', t.value);
-    value.append(el('span', 'stat__unit', ' ' + t.unit));
-    b.append(el('span', 'stat__title', t.title), value, el('span', 'stat__sub', t.sub));
-    b.addEventListener('click', () => selectTab(t.tab, true));
-    tiles.append(b);
-  });
-  const parts = [el('p', 'overview__headline', o.headline), blocking, tiles];
-  if (o.top.length) {
-    const top = el('p', 'overview__top');
-    top.append(el('span', 'overview__toplabel', 'Ən vacib ' + o.top.length + ' düzəliş: '));
-    o.top.forEach((t, i) => {
-      if (i) top.append(document.createTextNode(' · '));
-      const a = el('a', 'report__link', t.topic);
-      a.href = '#' + t.anchor;
-      a.addEventListener('click', (e) => { e.preventDefault(); focusFix(t.anchor); });
-      top.append(a);
-    });
-    parts.push(top);
-  }
-  host.replaceChildren(...parts);
-}
-/** Nəticə blokundakı keçid: kart gizli siyahıdadırsa açılır, sonra karta sürüşür və fokuslanır. */
-function focusFix(anchor) {
-  const card = document.getElementById(anchor);
-  if (!card) return;
-  if (card.parentElement && card.parentElement.id === 'fixes-more') setFixesOpen(true);
-  card.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  card.focus({ preventScroll: true });
-}
-function fixItem(f) {
-  const li = el('li', 'fix fix--' + f.severity);
-  li.id = f.anchor;
-  li.tabIndex = -1;
-  const head = el('div', 'fix__head');
-  head.append(el('span', 'fix__sev', Report.SEVERITY_LABEL[f.severity]), el('h3', 'fix__topic', f.topic));
-  (f.codes || []).forEach((c) => {
-    // Kod kiçik və boz; tələbin tam adı tooltip-də və ekran oxuyucuda.
-    const code = el('span', 'fix__code', c.code);
-    code.title = c.title;
-    code.setAttribute('aria-label', 'Tələb ' + c.title);
-    head.append(code);
-  });
-  li.append(head);
-  const body = el('dl', 'fix__body');
-  const row = (label, value) => {
-    if (!value) return;
-    const wrap = el('div', 'fix__row');
-    const dd = el('dd');
-    if (typeof value === 'string') dd.textContent = value; else dd.append(value);
-    wrap.append(el('dt', null, label), dd);
-    body.append(wrap);
-  };
-  row('Nə çatışmır', f.missing);
-  row('Nə etmək lazımdır', f.action);
-  row('Sənəddə yeri', f.location);
-  if (f.related && f.related.length) {
-    const list = el('ul', 'fix__related');
-    f.related.forEach((r) => {
-      const item = el('li');
-      item.append(document.createTextNode(r.text));
-      if (r.ref) {
-        const link = el('button', 'fix__inline', 'yerinə bax');
-        link.type = 'button';
-        link.setAttribute('aria-label', 'Yerinə bax: ' + r.text);
-        link.addEventListener('click', () => openFixSource(r.ref, link));
-        item.append(document.createTextNode(' · '), link);
-      }
-      list.append(item);
-    });
-    row('Əlaqəli', list);
-  }
-  li.append(body);
-  if (f.ref) {
-    const b = el('button', 'btn btn--small fix__src');
-    b.type = 'button';
-    b.append(icon('fileText'), el('span', null, 'Mənbəyə bax'));
-    b.setAttribute('aria-label', 'Mənbəyə bax: ' + f.topic);
-    b.addEventListener('click', () => openFixSource(f.ref, b));
-    li.append(b);
-  }
-  return li;
+  renderSummaryPanel(check, p, report, overview, openFixSource);
 }
 /** "Mənbəyə bax": tələb, maliyyə yoxlaması və ya boş yer üçün mövcud dəlil paneli. */
+/** Status sonradan cari qaydalarla yenidən hesablanıbsa — versiya tarixçəsinin qeydidir (Müqayisə tabı). */
+function renderRulesNote(check) {
+  const rules = (check.result || {}).rules || {};
+  const verdicts = (state.meta && state.meta.verdicts) || {};
+  const before = rules.reevaluated && rules.previous_verdict && rules.previous_verdict !== check.verdict
+    ? verdicts[rules.previous_verdict] : null;
+  const note = $('cmp-rules');
+  if (!note) return;
+  note.hidden = !before;
+  note.textContent = before ? 'v' + check.version + ' statusu cari qaydalarla yenidən hesablanıb: “' + before + '” → “'
+    + (verdicts[check.verdict] || check.verdict_label || '') + '”.' : '';
+}
 function openFixSource(ref, opener) {
   const p = resultParts(state.check);
   if (ref.type === 'req') {
@@ -279,15 +121,6 @@ function openFixSource(ref, opener) {
     const item = (p.ingest.placeholders || [])[ref.index];
     if (item) openPlaceholderDetail(item, ref.index, opener);
   }
-}
-function setFixesOpen(open) {
-  const more = $('fixes-more');
-  const toggle = $('fixes-toggle');
-  const n = more.children.length;
-  more.hidden = !open;
-  toggle.hidden = n === 0;
-  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  toggle.textContent = open ? 'Daha az göstər' : 'Daha ' + n + ' bənd göstər';
 }
 /* ── Tələblər xəritəsi və maliyyə zolağı (Xülasə) ───────────────────────── */
 
