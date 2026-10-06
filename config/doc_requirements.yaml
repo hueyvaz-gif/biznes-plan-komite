@@ -1,0 +1,68 @@
+# Sual ↔ tələb olunan sənəd xəritəsi (iqtisadi təhlil).
+#
+# QAYDA: hər qayda yalnız riski BİRBAŞA azaldan və ya rəqəmi TƏSDİQLƏYƏN sənədi tələb edir.
+# Boş siyahı ([]) — sənəd tələb olunmur, ərizəçi YAZILI CAVAB verir (əsaslandırma, metod).
+# Kod bu faylı oxuyur (app/economics/catalog.py); sənəd adları da buradan gəlir.
+
+senedler:
+  kommersiya_teklifi: Təchizatçının kommersiya təklifi / invoys
+  niyyet_mektubu: Alıcının niyyət məktubu və ya müqaviləsi
+  satis_muqavilesi: Uzunmüddətli satış müqaviləsi və ya qiymət formulu olan müqavilə
+  satis_hecmi_muqavilesi: Satış həcmini təsdiqləyən müqavilələr (həcm göstərilməklə)
+  qiymet_risk_plani: Qiymət riskinin idarə planı
+  xammal_muqavilesi: Uzunmüddətli xammal təchizatı müqaviləsi və ya sabit qiymətli təklif
+  hedcinq_plani: Xammal qiyməti üzrə hedcinq planı
+  gozlenilmez_xerc: Gözlənilməz xərclər ehtiyatının əsaslandırılması
+  tarif_mektubu: Tarif və qoşulma şərtləri məktubu (elektrik, qaz, su)
+  torpaq_cixarisi: Torpaq / mülkiyyət (icarə) çıxarışı
+  bank_arayisi: Öz vəsaitin mövcudluğu barədə bank arayışı
+  fond_tesdiqi: Fondun (investorun) maliyyələşmə təsdiqi
+  excel_model: Excel maliyyə modeli (düsturlarla)
+  kredit_teklifi: Bankın kredit təklif məktubu
+  guzest_senedi: Sənaye parkı rezidentlik şəhadətnaməsi / investisiya təşviqi sənədi
+
+# Daxili uyğunluq qaydaları (app/economics/rules.py → finding id)
+qaydalar:
+  gelir_hecm_qiymet: [excel_model]                 # gəlir ≠ həcm × qiymət — modelin rəqəmləri
+  hecm_guc: [kommersiya_teklifi]                   # güc — avadanlığın texniki göstəriciləri
+  guc_rampasi: [niyyet_mektubu]                    # 1-ci ilin həcmi — alıcıların təsdiqi
+  xammal_xerci: [xammal_muqavilesi]                # xammalın qiyməti
+  enerji_xerci: [tarif_mektubu]
+  emek_haqqi_fondu: [excel_model]
+  amortizasiya: [excel_model]
+  capex_investisiya: [kommersiya_teklifi]
+  maliyyelesme_menbeleri: [bank_arayisi, fond_tesdiqi]
+  vergi_guzestleri: [guzest_senedi]
+  dovriyye_kapitali: []                            # günlərin əsaslandırılması — yazılı
+  diskont_esaslandirma: []                         # yalnız yazılı əsaslandırma
+  irr_diskont_ferqi: []
+  qaliq_deyer_payi: []                             # metod və artım tempi — yazılı
+  proqnoz_ufuqu: []
+  dscr: [kredit_teklifi]
+  zaman_xetti: [kommersiya_teklifi, torpaq_cixarisi]
+  xammal_payi_bazasi: []
+  hessasliq: []                                    # ümumi tapıntı sual vermir — suallar ssenarilər üzrədir
+  zerersizlik: [satis_hecmi_muqavilesi]
+
+# Həssaslıq: NPV < 0 olan HƏR ssenari üçün ayrıca sual və öz sənədi
+hessasliq_ssenarileri:
+  price_-10: [satis_muqavilesi, qiymet_risk_plani]
+  raw_+10: [xammal_muqavilesi, hedcinq_plani]
+  capex_+15: [kommersiya_teklifi, gozlenilmez_xerc]
+  capacity_80: [niyyet_mektubu, satis_hecmi_muqavilesi]
+  delay_1y: []                                     # gecikmə riskinin idarəsi — yazılı
+
+# Reallıq yoxlaması (benchmark-dan kənar plan göstəricisi → təsdiqləyən sənəd)
+realliq:
+  price_avg_per_t: [satis_muqavilesi]
+  raw_cost_per_t: [xammal_muqavilesi]
+  electricity_tariff: [tarif_mektubu]
+  gas_tariff: [tarif_mektubu]
+  capex_per_t: [kommersiya_teklifi]
+  avg_wage: []
+  margin_pct: []
+  receivable_days: []
+  payable_days: []
+  profit_tax_rate_pct: []
+  vat_rate_pct: []
+  property_tax_rate_pct: []

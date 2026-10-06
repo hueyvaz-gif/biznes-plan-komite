@@ -1,0 +1,425 @@
+{
+  "source": "Layihənin öz ümumi biznes plan tələbləri siyahısı — heç bir qurumun rəsmi tələblərinin surəti deyil.",
+  "version": "2026-10-05",
+  "status": "Daxili siyahı: rəsmi standartla tutuşdurulmayıb. Konkret qurumun tələbləri üçün istifadə olunarsa, əvvəlcə onun rəsmi siyahısı ilə uyğunlaşdırılmalıdır.",
+  "note": "kind='sened' bəndləri biznes planın mətnində deyil, AYRICA sənəd kimi təqdim olunur — onlar LLM-ə göndərilmir.",
+  "groups": [
+    {
+      "id": "xulase",
+      "title": "1. Layihənin qısa xülasəsi",
+      "items": [
+        {
+          "id": "X1",
+          "kind": "plan",
+          "text": "Layihənin məqsədi, ümumi dəyəri və istehsal olunacaq məhsullar qısa şəkildə göstərilib.",
+          "topic": "Layihənin qısa xülasəsi",
+          "action": "Xülasədə layihənin məqsədini, ümumi dəyərini və istehsal olunacaq məhsulları qısa yazın."
+        }
+      ]
+    },
+    {
+      "id": "tesebbuskar",
+      "title": "2. Layihənin təşəbbüskarı barədə məlumatlar",
+      "items": [
+        {
+          "id": "TS1",
+          "kind": "plan",
+          "text": "Təşəbbüskarın adı və hüquqi forması (MMC, ASC və s.) göstərilib.",
+          "topic": "Təşəbbüskarın adı və hüquqi forması",
+          "action": "Təşəbbüskarın tam adını və hüquqi formasını (MMC, ASC və s.) yazın."
+        },
+        {
+          "id": "TS2",
+          "kind": "plan",
+          "text": "Təsis tarixi, VÖEN və hüquqi ünvan göstərilib.",
+          "topic": "Şirkətin rekvizitləri",
+          "action": "Şirkətin VÖEN-ini, hüquqi ünvanını və təsis tarixini əlavə edin."
+        },
+        {
+          "id": "TS3",
+          "kind": "plan",
+          "text": "Təşəbbüskarın mövcud fəaliyyət sahəsi və istehsal etdiyi məhsullar göstərilib.",
+          "topic": "Təşəbbüskarın mövcud fəaliyyəti",
+          "action": "Təşəbbüskarın hazırkı fəaliyyət sahəsini və istehsal etdiyi məhsulları yazın."
+        },
+        {
+          "id": "TS4",
+          "kind": "plan",
+          "text": "Səhmdarlar/təsisçilər və onların payları göstərilib.",
+          "topic": "Təsisçilər və paylar",
+          "action": "Təsisçiləri və onların paylarını göstərin."
+        },
+        {
+          "id": "TS5",
+          "kind": "plan",
+          "text": "Direktor və idarəetmə heyəti (menecment) haqqında məlumat verilib.",
+          "topic": "Rəhbərlik",
+          "action": "Direktor və idarəetmə heyəti haqqında məlumat əlavə edin."
+        }
+      ]
+    },
+    {
+      "id": "tesvir",
+      "title": "3. Layihənin təsviri",
+      "items": [
+        {
+          "id": "LT1",
+          "kind": "plan",
+          "text": "İqtisadi fəaliyyət sahəsi və onun kodu, istehsal olunacaq məhsullar və onların növləri göstərilib.",
+          "topic": "Fəaliyyət sahəsi və məhsullar",
+          "action": "Fəaliyyət sahəsini, onun kodunu və istehsal olunacaq məhsulların növlərini göstərin."
+        },
+        {
+          "id": "LT2",
+          "kind": "plan",
+          "text": "Hazır məhsulların və idxal olunacaq xammalın HS (XİF MN) kodları göstərilib.",
+          "topic": "HS (XİF MN) kodları",
+          "action": "Hazır məhsulların və idxal olunacaq xammalın HS (XİF MN) kodlarını əlavə edin."
+        },
+        {
+          "id": "LT3",
+          "kind": "sened",
+          "text": "HS kodları üzrə Excel formatında hesabat təqdim olunub.",
+          "topic": "HS kodları üzrə Excel hesabatı",
+          "action": "HS kodları üzrə Excel hesabatını ayrıca təqdim edin."
+        },
+        {
+          "id": "LT4",
+          "kind": "plan",
+          "text": "Layihənin istehsal gücü (illik/saatlıq həcm) göstərilib.",
+          "topic": "İstehsal gücü",
+          "action": "İllik və saatlıq istehsal gücünü göstərin."
+        },
+        {
+          "id": "LT5",
+          "kind": "sened",
+          "text": "İstehsal olunacaq məhsulların şəkilləri təqdim olunub.",
+          "topic": "Məhsul şəkilləri",
+          "action": "Məhsulların şəkillərini ayrıca təqdim edin."
+        },
+        {
+          "id": "LT6",
+          "kind": "plan",
+          "text": "Avadanlıqlar, onların alınacağı ölkə və şirkətlər, ilkin müqavilə/təkliflər, texniki pasportlar və texnoloji proses sxemi göstərilib.",
+          "topic": "Avadanlıq və təchizatçılar",
+          "action": "Avadanlığın alınacağı ölkə və şirkətləri, ilkin müqavilə və ya təklifləri, texniki pasportları və texnoloji proses sxemini əlavə edin."
+        },
+        {
+          "id": "LT7",
+          "kind": "plan",
+          "text": "Müəssisənin iş rejimi (növbə sayı, növbənin müddəti, illik iş günləri) göstərilib.",
+          "topic": "İş rejimi",
+          "action": "Növbə sayını, növbənin müddətini və illik iş günlərini göstərin."
+        },
+        {
+          "id": "LT8",
+          "kind": "plan",
+          "text": "Layihənin ekologiyaya təsiri və qoruyucu tədbirlər təsvir edilib.",
+          "topic": "Ekoloji təsir",
+          "action": "Layihənin ekologiyaya təsirini və qoruyucu tədbirləri yazın."
+        },
+        {
+          "id": "LT9",
+          "kind": "plan",
+          "text": "Məhsulların uyğun olacağı keyfiyyət standartları göstərilib.",
+          "topic": "Keyfiyyət standartları",
+          "action": "Məhsulların uyğun olacağı keyfiyyət standartlarını göstərin."
+        }
+      ]
+    },
+    {
+      "id": "yer_infrastruktur",
+      "title": "4. Yer, infrastruktur və güzəştlər",
+      "items": [
+        {
+          "id": "YI1",
+          "kind": "plan",
+          "text": "Layihənin yeri və tələb olunan ərazinin (torpaq, bina) sahəsi göstərilib.",
+          "topic": "Layihənin yeri və sahəsi",
+          "action": "Layihənin yerini, torpaq və bina sahəsini göstərin."
+        },
+        {
+          "id": "YI2",
+          "kind": "plan",
+          "text": "İnfrastruktur tələbatı (elektrik enerjisi, su, qaz) həcmlə göstərilib.",
+          "topic": "İnfrastruktur tələbatı",
+          "action": "Elektrik enerjisi, su və qaz tələbatını həcmlə göstərin."
+        },
+        {
+          "id": "YI3",
+          "kind": "plan",
+          "text": "İnfrastrukturun necə təmin olunacağı (mövcud şəbəkə, yeni qoşulma) və onun xərci göstərilib.",
+          "topic": "İnfrastrukturun təmin olunması",
+          "action": "İnfrastrukturun necə təmin olunacağını (mövcud şəbəkə və ya yeni qoşulma) və bunun xərcini yazın."
+        },
+        {
+          "id": "YI4",
+          "kind": "plan",
+          "text": "Layihəyə tətbiq olunan vergi, gömrük və digər güzəştlər (varsa) hüquqi əsası ilə göstərilib.",
+          "topic": "Vergi və gömrük güzəştləri",
+          "action": "Tətbiq olunan vergi, gömrük və digər güzəştləri hüquqi əsası ilə göstərin.",
+          "condition": {
+            "text": "Layihəyə güzəşt tətbiq olunursa",
+            "not_applicable_when": [
+              "güzəşt(lər)?\\s+(tətbiq\\s+)?(edilmir|olunmur|nəzərdə\\s+tutulmur)",
+              "heç\\s+bir\\s+güzəşt\\w*\\s+(yoxdur|tətbiq\\s+(edilmir|olunmur))"
+            ]
+          }
+        },
+        {
+          "id": "YI5",
+          "kind": "plan",
+          "text": "Güzəştlərin (varsa) layihənin maliyyə nəticələrinə təsiri hesablanıb.",
+          "topic": "Güzəştlərin maliyyə təsiri",
+          "action": "Güzəştlərin layihənin maliyyə nəticələrinə təsirini hesablayın.",
+          "condition": {
+            "text": "Layihəyə güzəşt tətbiq olunursa",
+            "not_applicable_when": [
+              "güzəşt(lər)?\\s+(tətbiq\\s+)?(edilmir|olunmur|nəzərdə\\s+tutulmur)",
+              "heç\\s+bir\\s+güzəşt\\w*\\s+(yoxdur|tətbiq\\s+(edilmir|olunmur))"
+            ]
+          }
+        },
+        {
+          "id": "YI6",
+          "kind": "plan",
+          "text": "Ərazi və infrastruktur üzrə icarə və xidmət haqları maliyyə hesabatlarında göstərilib.",
+          "topic": "İcarə və xidmət haqları",
+          "action": "Ərazi və infrastruktur üzrə icarə və xidmət haqlarını maliyyə hesabatlarında göstərin."
+        }
+      ]
+    },
+    {
+      "id": "bazar",
+      "title": "5. Bazar araşdırması",
+      "items": [
+        {
+          "id": "BZ1",
+          "kind": "plan",
+          "text": "Məhsula daxili tələbat və mövcud rəqiblər təhlil edilib.",
+          "topic": "Daxili tələbat və rəqiblər",
+          "action": "Məhsula daxili tələbatı və əsas rəqibləri təhlil edin."
+        },
+        {
+          "id": "BZ2",
+          "kind": "plan",
+          "text": "Daxili bazarın və ixracın satışdakı payı faizlə göstərilib.",
+          "topic": "Daxili satış və ixrac payı",
+          "action": "Satışda daxili bazarın və ixracın payını faizlə göstərin."
+        },
+        {
+          "id": "BZ3",
+          "kind": "plan",
+          "text": "Potensial müştərilər və onlarla ilkin razılaşmalar (niyyət məktubları) göstərilib.",
+          "topic": "Müştərilər və niyyət məktubları",
+          "action": "Potensial müştəriləri göstərin və onlarla ilkin razılaşmaları (niyyət məktublarını) əlavə edin."
+        },
+        {
+          "id": "BZ4",
+          "kind": "plan",
+          "text": "Dünya bazarında vəziyyət təhlil edilib.",
+          "topic": "Dünya bazarı",
+          "action": "Dünya bazarındakı vəziyyəti qısa təhlil edin."
+        }
+      ]
+    },
+    {
+      "id": "teskilati",
+      "title": "6. Təşkilati plan",
+      "items": [
+        {
+          "id": "TP1",
+          "kind": "plan",
+          "text": "Tikintinin başlama və bitmə tarixləri, istehsala başlama tarixi göstərilib.",
+          "topic": "Tikinti və istehsal tarixləri",
+          "action": "Tikintinin başlama və bitmə tarixlərini, istehsala başlama tarixini göstərin."
+        },
+        {
+          "id": "TP2",
+          "kind": "plan",
+          "text": "Çertyoj, avadanlıqların yerləşmə sxemi və müəssisənin görünüş fotosu təqdim olunub.",
+          "topic": "Çertyoj və yerləşmə sxemi",
+          "action": "Çertyoju, avadanlığın yerləşmə sxemini və müəssisənin görünüş fotosunu əlavə edin."
+        },
+        {
+          "id": "TP3",
+          "kind": "plan",
+          "text": "Layihənin icra qrafiki Qantt diaqramı şəklində verilib.",
+          "topic": "İcra qrafiki",
+          "action": "Layihənin icra qrafikini Qantt diaqramı şəklində əlavə edin."
+        }
+      ]
+    },
+    {
+      "id": "investisiya",
+      "title": "7. İnvestisiya planı",
+      "items": [
+        {
+          "id": "IP1",
+          "kind": "plan",
+          "text": "İnvestisiyanın həcmi və mənbəyi (xüsusi vəsait / borc) göstərilib.",
+          "topic": "İnvestisiyanın həcmi və mənbəyi",
+          "action": "İnvestisiyanın həcmini və mənbəyini (xüsusi vəsait və ya borc) göstərin."
+        },
+        {
+          "id": "IP2",
+          "kind": "plan",
+          "text": "Kreditin mənbəyi və ödəniş qrafiki göstərilib.",
+          "topic": "Kredit və ödəniş qrafiki",
+          "action": "Kreditin mənbəyini və ödəniş qrafikini əlavə edin.",
+          "condition": {
+            "text": "Layihədə kredit cəlb olunursa",
+            "not_applicable_when": [
+              "(bank\\s+)?kredit(i|dən)?\\s+(cəlb\\s+)?(edilmir|olunmur|edilməyəcək|olunmayacaq|nəzərdə\\s+tutulmur)",
+              "kredit(dən)?\\s+istifadə\\s+(edilmir|olunmur|edilməyəcək|olunmayacaq)",
+              "borc\\s+vəsaiti\\s+(cəlb\\s+)?(edilmir|olunmur|nəzərdə\\s+tutulmur)"
+            ]
+          }
+        },
+        {
+          "id": "IP3",
+          "kind": "plan",
+          "text": "İnvestisiyanın əsas vəsaitlər və dövriyyə vəsaitləri üzrə həcmi ayrıca göstərilib.",
+          "topic": "Əsas və dövriyyə vəsaitləri",
+          "action": "İnvestisiyanı əsas vəsaitlər və dövriyyə vəsaitləri üzrə ayrıca göstərin."
+        },
+        {
+          "id": "IP4",
+          "kind": "plan",
+          "text": "İllik istehsal həcmi və məhsul vahidinin qiyməti göstərilib.",
+          "topic": "İstehsal həcmi və qiymət",
+          "action": "İllik istehsal həcmini və məhsul vahidinin qiymətini göstərin."
+        },
+        {
+          "id": "IP5",
+          "kind": "plan",
+          "text": "Əsas vəsaitlər üzrə investisiya maddələrlə (tikinti sahələri, avadanlıq, nəqliyyat və s.) açıqlanıb.",
+          "topic": "Əsas vəsaitlərə investisiya",
+          "action": "Əsas vəsaitlərə investisiyanı maddələrlə (tikinti, avadanlıq, nəqliyyat və s.) açıqlayın."
+        },
+        {
+          "id": "IP6",
+          "kind": "plan",
+          "text": "Avadanlıqların adları, qiymətləri, istehsalçı ölkəsi və markası göstərilib.",
+          "topic": "Avadanlıq siyahısı",
+          "action": "Avadanlığın adlarını, qiymətlərini, istehsalçı ölkəsini və markasını göstərin."
+        },
+        {
+          "id": "IP7",
+          "kind": "plan",
+          "text": "Dövriyyə kapitalının strukturu açıqlanıb.",
+          "topic": "Dövriyyə kapitalının strukturu",
+          "action": "Dövriyyə kapitalının strukturunu açıqlayın."
+        },
+        {
+          "id": "IP8",
+          "kind": "plan",
+          "text": "Məhsulun maya dəyərinin strukturu göstərilib.",
+          "topic": "Maya dəyərinin strukturu",
+          "action": "Məhsulun maya dəyərinin strukturunu göstərin."
+        },
+        {
+          "id": "IP9",
+          "kind": "plan",
+          "text": "Xammal üzrə təchizatçılar, daxili/idxal payı, vahidə sərf normaları və maya dəyərindəki çəkisi göstərilib.",
+          "topic": "Xammal təchizatı",
+          "action": "Xammal təchizatçılarını, daxili və idxal payını, vahidə sərf normalarını və maya dəyərindəki çəkisini göstərin."
+        }
+      ]
+    },
+    {
+      "id": "maliyye",
+      "title": "8. Maliyyə planı",
+      "items": [
+        {
+          "id": "MP1",
+          "kind": "plan",
+          "text": "10 illik balans, mənfəət-zərər, kapitalda dəyişikliklər və pul vəsaitlərinin hərəkəti hesabatları verilib.",
+          "topic": "Maliyyə hesabatları",
+          "action": "10 illik balans, mənfəət-zərər, kapitalda dəyişikliklər və pul vəsaitlərinin hərəkəti hesabatlarını əlavə edin."
+        },
+        {
+          "id": "MP2",
+          "kind": "plan",
+          "text": "NPV, IRR, Payback (PP), DPBP, WACC və ROE göstəriciləri hesablanıb.",
+          "topic": "Səmərəlilik göstəriciləri",
+          "action": "NPV, IRR, PP, DPBP, WACC və ROE göstəricilərini hesablayın."
+        },
+        {
+          "id": "MP3",
+          "kind": "plan",
+          "text": "Həssaslıq təhlili aparılıb.",
+          "topic": "Həssaslıq təhlili",
+          "action": "Həssaslıq təhlili əlavə edin."
+        },
+        {
+          "id": "MP4",
+          "kind": "sened",
+          "text": "Düsturları ilə birlikdə Excel formatında maliyyə modeli təqdim olunub.",
+          "topic": "Excel maliyyə modeli",
+          "action": "Düsturları ilə birlikdə Excel maliyyə modelini ayrıca təqdim edin."
+        }
+      ]
+    },
+    {
+      "id": "swot",
+      "title": "9. SWOT və risk təhlili",
+      "items": [
+        {
+          "id": "SW1",
+          "kind": "plan",
+          "text": "SWOT təhlili aparılıb.",
+          "topic": "SWOT təhlili",
+          "action": "SWOT təhlili əlavə edin."
+        },
+        {
+          "id": "SW2",
+          "kind": "plan",
+          "text": "Risklər və onların yumşaldılması tədbirləri göstərilib.",
+          "topic": "Risklər",
+          "action": "Riskləri və onların yumşaldılması tədbirlərini göstərin."
+        }
+      ]
+    },
+    {
+      "id": "effekt",
+      "title": "10. Layihənin iqtisadi effekti",
+      "items": [
+        {
+          "id": "IE1",
+          "kind": "plan",
+          "text": "Son məhsul istehsalının həcmi dəyərlə göstərilib.",
+          "topic": "Məhsul istehsalının dəyəri",
+          "action": "Son məhsul istehsalının həcmini dəyərlə göstərin."
+        },
+        {
+          "id": "IE2",
+          "kind": "plan",
+          "text": "Yaradılacaq yeni iş yerlərinin sayı göstərilib.",
+          "topic": "Yeni iş yerləri",
+          "action": "Yaradılacaq yeni iş yerlərinin sayını göstərin."
+        },
+        {
+          "id": "IE3",
+          "kind": "plan",
+          "text": "İdxalın əvəzlənməsi və ixrac perspektivləri açıqlanıb.",
+          "topic": "İdxalın əvəzlənməsi və ixrac",
+          "action": "İdxalın əvəzlənməsi və ixrac perspektivlərini açıqlayın."
+        }
+      ]
+    },
+    {
+      "id": "huquqi",
+      "title": "11. Hüquqi məsələlər",
+      "items": [
+        {
+          "id": "HQ1",
+          "kind": "plan",
+          "text": "Fəaliyyət üçün tələb olunan lisenziyalar və icazələr göstərilib.",
+          "topic": "Lisenziya və icazələr",
+          "action": "Fəaliyyət üçün lazım olan lisenziya və icazələri göstərin."
+        }
+      ]
+    }
+  ]
+}

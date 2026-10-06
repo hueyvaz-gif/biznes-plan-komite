@@ -1,0 +1,31 @@
+# Virtual mühit
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Sirlər
+.env
+
+# Orijinal (anonimləşdirilməmiş) fayllar — repozitoriyaya düşməməlidir
+input/
+
+# İş zamanı yaranan məlumatlar
+data/*.db
+data/uploads/
+data/demo/
+samples/
+
+# IDE
+.idea/
+.vscode/
+
+# Testlər
+.pytest_cache/
+data/*.db-shm
+data/*.db-wal
+
+# Node / Playwright
+node_modules/
+test-results/
+playwright-report/

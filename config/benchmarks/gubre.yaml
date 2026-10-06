@@ -1,0 +1,134 @@
+# Reallıq yoxlaması — mineral gübrə istehsalı sektoru.
+#
+# QAYDA: sətir yalnız `menbe` (TODO olmayan) və `tarix` doldurulanda istifadə olunur. Mənbəsi və ya
+# tarixi olmayan sətir YOXLANILMIR — nəticədə "yoxlanıla bilməz" yazılır, təxmin edilmir.
+# `min` / `max` — biri boş qala bilər (yalnız alt və ya üst hədd). `valyuta` USD/EUR olarsa, hədlər
+# AMB-nin rəsmi məzənnəsi ilə manata çevrilir (məzənnə alınmasa — "yoxlanıla bilməz").
+# `plan` — plandakı hansı göstərici ilə tutuşdurulur (kataloq açarı və ya hesablanan göstərici).
+#
+# Rəqəmlər BURADA UYDURULMAYIB: dəyər və mənbə sahələrini komitə doldurur.
+
+sektor: gubre
+ad: Mineral gübrə istehsalı
+
+gostericiler:
+  - id: gubre_qiymeti
+    ad: Gübrənin orta satış qiyməti (1 ton)
+    plan: price_avg_per_t
+    vahid: manat/t
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: xammal_deyeri
+    ad: 1 ton məhsula düşən xammal dəyəri
+    plan: raw_cost_per_t
+    vahid: manat/t
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: elektrik_tarifi
+    ad: Elektrik enerjisinin tarifi (qeyri-məişət, Azərişıq)
+    plan: electricity_tariff
+    vahid: manat/kVt·st
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: qaz_tarifi
+    ad: Təbii qazın tarifi (qeyri-məişət, Azəriqaz)
+    plan: gas_tariff
+    vahid: manat/m³
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: orta_maas
+    ad: Sektor üzrə orta aylıq əmək haqqı
+    plan: avg_wage            # hesablanan: aylıq fond / ştat sayı
+    vahid: manat/ay
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: marja
+    ad: Marjinal gəlirin satış qiymətində payı
+    plan: margin_pct          # hesablanan: marjinal gəlir / qiymət
+    vahid: "%"
+    valyuta: null
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: capex_ton
+    ad: 1 ton illik gücə düşən əsas vəsait (capex)
+    plan: capex_per_t         # hesablanan: əsas vəsaitlər / praktiki illik güc
+    vahid: manat/t
+    valyuta: AZN
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: debitor_gun
+    ad: Debitor borcların dövriyyəsi
+    plan: receivable_days
+    vahid: gün
+    valyuta: null
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: kreditor_gun
+    ad: Kreditor borcların dövriyyəsi
+    plan: payable_days
+    vahid: gün
+    valyuta: null
+    min: null
+    max: null
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  # Vergi dərəcələri — komitənin tapşırığında verilib; mənbə (Vergi Məcəlləsinin maddəsi) doldurulmalıdır.
+  - id: menfeet_vergisi
+    ad: Mənfəət vergisinin dərəcəsi (ümumi rejim)
+    plan: profit_tax_rate_pct
+    vahid: "%"
+    valyuta: null
+    min: 20
+    max: 20
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: edv
+    ad: ƏDV dərəcəsi (ümumi rejim)
+    plan: vat_rate_pct
+    vahid: "%"
+    valyuta: null
+    min: 18
+    max: 18
+    menbe: "TODO: mənbə"
+    tarix: null
+
+  - id: emlak_vergisi
+    ad: Əmlak vergisinin dərəcəsi
+    plan: property_tax_rate_pct
+    vahid: "%"
+    valyuta: null
+    min: 1
+    max: 1
+    menbe: "TODO: mənbə"
+    tarix: null

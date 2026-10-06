@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biznes Plan qiymətləndirmə komitəsi</title>
+  <meta name="description" content="Biznes planın tamlığını və daxili maliyyə uyğunluğunu yoxlayan komitə.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Əsas məzmuna keç</a>
+<div class="demo-banner" id="demo-banner" role="note" hidden>
+  <strong>DEMO</strong> — saxta model və sintetik məlumatla qurulmuş nümunə. Real nəticə deyil,
+  heç nə göndərilmir və tarixçəyə yazılmır.
+</div>
+
+<div class="shell">
+  <!-- ── Sol naviqasiya ─────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar" aria-label="Naviqasiya">
+    <div class="brand">
+      <img class="brand__mark" src="/static/favicon.svg" alt="" width="38" height="38">
+      <span class="brand__name">Biznes Plan</span>
+    </div>
+
+    <nav class="nav" aria-labelledby="nav-label">
+      <p class="nav__label" id="nav-label">İş sahəsi</p>
+      <button class="navitem is-here" type="button" id="nav-new">
+        <span class="icon" data-icon="filePlus" aria-hidden="true"></span>Yeni yoxlama
+      </button>
+      <button class="navitem" type="button" id="nav-history" aria-expanded="true" aria-controls="history-box">
+        <span class="icon" data-icon="fileText" aria-hidden="true"></span>Planlar və versiyalar
+        <span class="navitem__count" id="history-count"></span>
+        <span class="icon navitem__chev" data-icon="chevronDown" aria-hidden="true"></span>
+      </button>
+    </nav>
+
+    <!-- Seçilmiş plan: vizual olaraq siyahıda vurğulanır; ekran oxuyucu üçün ayrıca. -->
+    <section class="sr-only" id="nav-current" hidden aria-labelledby="nav-current-title">
+      <h2 id="nav-current-title">Seçilmiş plan</h2>
+      <p id="nav-current-name"></p>
+      <p id="nav-current-meta"></p>
+      <p id="nav-current-status"></p>
+    </section>
+
+    <section class="plans" id="history-box" aria-labelledby="history-title">
+      <h2 class="sr-only" id="history-title">Planlar və versiyalar</h2>
+      <ul class="history" id="history" aria-busy="true"></ul>
+      <p class="plans__empty" id="history-empty" hidden></p>
+    </section>
+
+    <!-- Bazar icmalı yoxlama işinə aid deyil — default yığılıb, diqqəti yayındırmır. -->
+    <section class="market" id="market" aria-labelledby="market-title" aria-busy="true">
+      <details class="market__box" id="market-box">
+      <summary class="market__head">
+        <h2 class="market__title" id="market-title">Bazar icmalı</h2>
+        <span class="tag tag--sage" id="market-tag" hidden>Nümunə</span>
+        <span class="icon market__chev" data-icon="chevronDown" aria-hidden="true"></span>
+      </summary>
+      <div class="mtabs" role="tablist" aria-label="Bazar icmalı bölmələri">
+        <button class="mtab" type="button" role="tab" id="mtab-fx" aria-controls="mpanel-fx" aria-selected="true">Valyuta</button>
+        <button class="mtab" type="button" role="tab" id="mtab-assets" aria-controls="mpanel-assets" aria-selected="false" tabindex="-1">Əmtəə</button>
+      </div>
+      <div class="mpanel" id="mpanel-fx" role="tabpanel" aria-labelledby="mtab-fx">
+        <ul class="market__list" id="market-fx" aria-label="Yüklənir"><li class="mskel" aria-hidden="true"></li><li class="mskel" aria-hidden="true"></li><li class="mskel" aria-hidden="true"></li></ul>
+        <p class="market__src" id="market-fx-src"></p>
+      </div>
+      <div class="mpanel" id="mpanel-assets" role="tabpanel" aria-labelledby="mtab-assets" hidden>
+        <ul class="market__list" id="market-assets"></ul>
+        <p class="market__src" id="market-assets-src"></p>
+      </div>
+      <p class="market__note" id="market-note"></p>
+      <details class="mnewsbox" id="market-news-box">
+        <summary>Dünya bazarı xəbərləri <span class="mnewsbox__lang">ingilis dilində</span></summary>
+        <p class="mnewsbox__hint">Əlavə məlumat üçündür — plan yoxlamasına təsir etmir.</p>
+        <ul class="market__news" id="market-news" aria-label="Dünya bazarı xəbərləri"></ul>
+      </details>
+      </details>
+    </section>
+
+    <footer class="sbfoot">
+      <button class="navitem navitem--help" type="button" id="nav-help">
+        <span class="icon" data-icon="help" aria-hidden="true"></span>Kömək mərkəzi
+      </button>
+      <p class="sidebar__foot">Status sənədin tamlığına aiddir — investisiya qərarı deyil.</p>
+    </footer>
+  </aside>
+  <div class="scrim" id="nav-scrim" hidden></div>
+
+  <!-- ── İş sahəsi ──────────────────────────────────────────────────────── -->
+  <div class="workspace">
+    <header class="topbar">
+      <button class="iconbtn topbar__menu" type="button" id="menu-btn"
+              aria-controls="sidebar" aria-expanded="false">
+        <span class="icon" data-icon="menu" aria-hidden="true"></span>
+        <span class="sr-only">Menyunu aç</span>
+      </button>
+      <nav class="crumbs" aria-label="Yol göstəricisi">
+        <span class="crumbs__root">İş sahəsi</span><span class="crumbs__sep" aria-hidden="true">/</span>
+        <span class="topbar__title" id="topbar-title" aria-current="page">Yeni yoxlama</span>
+      </nav>
+      <p class="net" id="net" role="status" hidden></p>
+    </header>
+
+    <main class="main" id="main" tabindex="-1">
+
+      <!-- ── Yükləmə ───────────────────────────────────────────────────── -->
+      <section class="view" id="view-upload" aria-labelledby="upload-title">
+        <header class="pagehead pagehead--hero">
+          <p class="eyebrow"><span class="icon" data-icon="sparkle" aria-hidden="true"></span>AI sənədi oxuyur · rəqəmlər ayrıca yenidən hesablanır</p>
+          <h1 class="pagehead__title" id="upload-title">Biznes planınızı yoxlayın</h1>
+          <p class="pagehead__lead">Sənədi yükləyin, tələbləri dəqiqləşdirin və hesabat əldə edin.</p>
+          <ul class="facts" id="facts" aria-label="Yoxlamanın əhatəsi" hidden>
+            <li class="fact"><strong class="fact__num" id="fact-req" data-count></strong><span class="fact__label">standart tələb
+              <small class="fact__sub" id="fact-req-sub"></small></span></li>
+            <li class="fact"><strong class="fact__num" id="fact-groups" data-count></strong><span class="fact__label">tələb qrupu</span></li>
+            <li class="fact"><strong class="fact__num" id="fact-fin" data-count></strong><span class="fact__label">maliyyə yoxlaması</span></li>
+          </ul>
+        </header>
+        <ol class="stepper" id="stepper-upload" aria-label="Yoxlamanın mərhələləri"></ol>
+
+        <div class="uplayout">
+          <form class="card upload" id="upload-form" novalidate aria-labelledby="plan-card-title">
+            <div class="card__head">
+              <h2 class="card__title" id="plan-card-title">Biznes plan</h2>
+              <span class="tag tag--req">Məcburi</span>
+            </div>
+            <fieldset class="planmode" id="plan-mode">
+              <legend class="field__label">Bu sənəd nədir?</legend>
+              <label class="planmode__opt"><input type="radio" name="plan-mode" value="new" checked>
+                <span><strong>Yeni plan yarat</strong><small>Ayrıca plan kimi saxlanılır</small></span></label>
+              <label class="planmode__opt"><input type="radio" name="plan-mode" value="existing" id="plan-mode-existing">
+                <span><strong>Mövcud plana versiya əlavə et</strong><small>Əvvəlki versiya ilə müqayisə olunur</small></span></label>
+            </fieldset>
+            <div class="field" id="plan-new-box">
+              <label class="field__label" for="plan-id">Planın adı</label>
+              <input class="input" id="plan-id" name="plan_id" maxlength="60" autocomplete="off"
+                     placeholder="Məsələn, Yeni istehsal xətti" aria-describedby="plan-id-hint" required>
+              <p class="field__hint" id="plan-id-hint">
+                Ad yalnız tanımaq üçündür: eyni adlı plan olsa belə, yeni plan ayrıca yaradılır.
+              </p>
+              <div class="plansuggest" id="plan-suggest" role="status" hidden>
+                <span id="plan-suggest-text"></span>
+                <button class="btn btn--small" type="button" id="plan-suggest-btn">Bu plana versiya əlavə et</button>
+              </div>
+            </div>
+            <div class="field" id="plan-existing-box" hidden>
+              <label class="field__label" for="plan-select">Hansı plana?</label>
+              <select class="input" id="plan-select" aria-describedby="plan-select-hint"></select>
+              <p class="field__hint" id="plan-select-hint">
+                Yüklədiyiniz fayl seçilmiş planın növbəti versiyası olacaq və əvvəlki versiya ilə müqayisə ediləcək.
+              </p>
+            </div>
+            <div class="dropzone" id="dropzone" tabindex="0" role="button"
+                 aria-describedby="dropzone-hint">
+              <span class="dropzone__halo" aria-hidden="true"><span class="dropzone__icon icon" data-icon="fileUp"></span></span>
+              <span class="dropzone__text" id="dropzone-text">DOCX faylını buraya atın</span>
+              <span class="linkish">və ya kompüterdən seçin</span>
+              <span class="dropzone__hint" id="dropzone-hint">.docx · maksimum <span id="max-mb">25</span> MB</span>
+              <input class="sr-only" type="file" id="file-input" accept=".docx" tabindex="-1">
+            </div>
+            <div class="filechip" id="filechip" hidden>
+              <span class="icon filechip__ok" data-icon="check" aria-hidden="true"></span>
+              <span class="filechip__name" id="filechip-name"></span>
+              <span class="filechip__size num" id="filechip-size"></span>
+              <button class="iconbtn" type="button" id="filechip-remove">
+                <span class="icon" data-icon="x" aria-hidden="true"></span>
+                <span class="sr-only">Faylı sil</span>
+              </button>
+            </div>
+
+            <div class="acc" id="extra-acc">
+              <button class="acc__head" type="button" id="extra-toggle" aria-expanded="false" aria-controls="extra-body">
+                <span class="acc__plus" aria-hidden="true"><span class="icon" data-icon="plus"></span></span>
+                <span class="acc__title">Əlavə tələblər</span>
+                <span class="tag tag--sage">İstəyə bağlı</span>
+                <span class="acc__summary" id="extra-summary"></span>
+                <span class="icon acc__chev" data-icon="chevronDown" aria-hidden="true"></span>
+              </button>
+              <div class="acc__body" id="extra-body" hidden>
+                <p class="block__text">
+                  Yükləmədən sonra sənədlərdən çıxarılan tələbləri görəcək, redaktə edəcək və təsdiqləyəcəksiniz.
+                  Tam yoxlama yalnız təsdiqdən sonra başlayır. Əlavələr standart siyahını əvəz etmir.
+                </p>
+                <p class="field__hint" id="extra-limits"></p>
+                <ul class="extralist" id="extra-list" aria-live="polite"></ul>
+                <div class="row">
+                  <button class="btn" type="button" id="extra-add">
+                    <span class="icon" data-icon="plus" aria-hidden="true"></span>Tələb sənədi əlavə et
+                  </button>
+                  <input class="sr-only" type="file" id="extra-input" accept=".pdf,.docx,.txt"
+                         multiple tabindex="-1">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="extra-text">Əlavə tələbi mətn kimi yazın</label>
+                  <textarea class="input input--area" id="extra-text" rows="3"
+                            aria-describedby="extra-text-hint"></textarea>
+                  <p class="field__hint" id="extra-text-hint"></p>
+                </div>
+              </div>
+            </div>
+            <p class="acc__hint">Bank və ya fondun tələblərini əlavə edin.</p>
+
+            <div class="block block--dev" id="dev-box" hidden>
+              <label class="field__label" for="fail-at">İnkişaf rejimi: süni xəta</label>
+              <select class="input" id="fail-at"></select>
+              <p class="field__hint">Retry-ni sınamaq üçündür; adi istifadədə görünmür.</p>
+            </div>
+
+            <p class="alert alert--error" id="upload-error" role="alert" hidden></p>
+
+            <div class="formfoot">
+              <p class="formfoot__next" id="next-step">Növbəti addım: yoxlama və hesabat</p>
+              <button class="btn btn--primary btn--lg" type="submit" id="submit-btn">
+                Davam et <span class="icon" data-icon="arrowRight" aria-hidden="true"></span>
+              </button>
+            </div>
+          </form>
+
+          <aside class="card explain" aria-labelledby="explain-title">
+            <h2 class="card__title" id="explain-title">Hesabatda nə olacaq?</h2>
+            <ul class="explain__list">
+              <li class="explain__item">
+                <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="fileText"></span></span>
+                <span><strong class="explain__name">Sənədin tamlığı</strong>
+                  <span class="explain__text">Biznes planın tələb olunan bölmələr üzrə tamlığını yoxlayırıq.</span></span>
+              </li>
+              <li class="explain__item">
+                <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="gear"></span></span>
+                <span><strong class="explain__name">Daxili uyğunluq</strong>
+                  <span class="explain__text">Maliyyə rəqəmlərinin bir-biri ilə uyğunluğunu planın öz cədvəllərindən yenidən hesablayırıq.</span></span>
+              </li>
+              <li class="explain__item">
+                <span class="explain__icon" aria-hidden="true"><span class="icon" data-icon="alert"></span></span>
+                <span><strong class="explain__name">Çatışmayan məlumatlar</strong>
+                  <span class="explain__text">Tələb olunan, lakin sənəddə olmayan və ya doldurulmamış məlumatları müəyyən edirik.</span></span>
+              </li>
+            </ul>
+            <div class="explain__art" aria-hidden="true">
+              <div class="paper paper--back"><span class="paper__bars"><i></i><i></i><i></i><i></i></span>
+                <span class="paper__line"></span><span class="paper__line"></span><span class="paper__line"></span></div>
+              <div class="paper paper--front">
+                <span class="paper__title">Biznes planın yoxlama hesabatı</span>
+                <span class="paper__line paper__line--wide"></span><span class="paper__line"></span>
+                <span class="paper__row"><span class="dot dot--ok"></span><span class="paper__line"></span></span>
+                <span class="paper__row"><span class="dot dot--ok"></span><span class="paper__line"></span></span>
+                <span class="paper__row"><span class="dot dot--skip"></span><span class="paper__line"></span></span>
+                <span class="paper__row"><span class="dot dot--warn"></span><span class="paper__line"></span></span>
+              </div>
+            </div>
+            <div class="explain__not">
+              <strong>Nəyi yoxlamırıq</strong>
+              <p>Layihənin gəlirli olub-olmayacağını, bazar proqnozlarının doğruluğunu və ayrıca tələb olunan
+                sənədlərin (lisenziya, Excel modeli və s.) mövcudluğunu yoxlamırıq.</p>
+            </div>
+            <p class="explain__foot"><span class="icon" data-icon="info" aria-hidden="true"></span>Yoxlama investisiya qərarı deyil.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ── Əlavə tələblərin təsdiqi ──────────────────────────────────── -->
+      <section class="view" id="view-review" aria-labelledby="review-title" hidden>
+        <header class="pagehead">
+          <p class="kicker" id="review-plan"></p>
+          <h1 class="pagehead__title" id="review-title">Əlavə tələbləri təsdiqləyin</h1>
+          <p class="pagehead__lead">
+            Model yalnız sənədlərdəki tələb bəndlərini çıxarıb — status verməyib. Bəndləri
+            yoxlayın, düzəldin, silin və ya əlavə edin. Təsdiqdən sonra siyahı dəyişmir və
+            təkrar cəhd (retry) eyni siyahını işlədir.
+          </p>
+        </header>
+        <ol class="stepper" id="stepper-review" aria-label="Yoxlamanın mərhələləri"></ol>
+
+        <div class="progress" id="review-progress" role="status" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Əlavə sənədlərdən tələblər çıxarılır…</span>
+        </div>
+        <div class="alert alert--warn" id="review-error" role="status" hidden>
+          <p id="review-error-text"></p>
+          <button class="btn" type="button" id="review-reextract">
+            <span class="icon" data-icon="refresh" aria-hidden="true"></span>Yenidən çıxar
+          </button>
+        </div>
+
+        <div class="alert alert--warn" id="review-limits" role="status" hidden>
+          <h2 class="alert__title">Siyahı natamamdır</h2>
+          <ul class="bullets" id="review-limits-list"></ul>
+          <details class="opinion__more" id="review-overlimit-box" hidden>
+            <summary>Limitdən kənarda qalan bəndlər <span class="count" id="review-overlimit-count"></span></summary>
+            <ul class="bullets" id="review-overlimit"></ul>
+          </details>
+          <label class="ack">
+            <input type="checkbox" id="review-ack">
+            Siyahının natamam olduğunu başa düşürəm — yoxlama yalnız aşağıdakı bəndləri əhatə edəcək.
+          </label>
+        </div>
+
+        <section class="block" aria-labelledby="review-files-title">
+          <h2 class="block__title" id="review-files-title">Yüklənmiş sənədlər</h2>
+          <ul class="extralist" id="review-files"></ul>
+        </section>
+
+        <section class="block" aria-labelledby="review-items-title">
+          <h2 class="block__title" id="review-items-title">Tələblər
+            <span class="count" id="review-count"></span></h2>
+          <p class="empty" id="review-empty" hidden>
+            Sənədlərdən tələb çıxarılmadı. Tələbləri əl ilə əlavə edə bilərsiniz.
+          </p>
+          <ol class="reviewlist" id="review-items"></ol>
+          <button class="btn" type="button" id="review-add">
+            <span class="icon" data-icon="plus" aria-hidden="true"></span>Tələb əlavə et
+          </button>
+        </section>
+
+        <details class="block block--muted" id="review-rejected-box" hidden>
+          <summary class="block__title">Mənbədə tapılmadığı üçün qəbul edilməyən bəndlər
+            <span class="count" id="review-rejected-count"></span></summary>
+          <p class="block__text">Modelin göstərdiyi fraqment sənədin mətnində yoxdur. Bu
+            bəndlər səssizcə qəbul edilmir; lazımdırsa, öz tələbiniz kimi əlavə edin.</p>
+          <ul class="rejected" id="review-rejected"></ul>
+        </details>
+
+        <p class="alert alert--error" id="review-submit-error" role="alert" hidden></p>
+        <div class="actions actions--sticky">
+          <button class="btn" type="button" id="review-cancel">Yeni yoxlama</button>
+          <button class="btn btn--primary btn--lg" type="button" id="review-confirm">
+            Təsdiqlə və yoxlamanı başlat
+          </button>
+        </div>
+      </section>
+
+      <!-- ── İcra ──────────────────────────────────────────────────────── -->
+      <section class="view" id="view-run" aria-labelledby="run-title" hidden>
+        <header class="pagehead">
+          <p class="kicker" id="run-plan"></p>
+          <h1 class="pagehead__title" id="run-title">Hesabat açılır…</h1>
+          <p class="pagehead__lead" id="run-lead" hidden>
+            Yoxlama bir neçə dəqiqə çəkə bilər. Səhifəni bağlasanız da davam edəcək — nəticə
+            "Planlar və versiyalar" bölməsində görünəcək.
+          </p>
+          <p class="runloading" id="run-loading" role="status"><span class="spinner" aria-hidden="true"></span>Hesabat açılır…</p>
+        </header>
+        <ol class="stepper" id="stepper-run" aria-label="Yoxlamanın mərhələləri"></ol>
+        <div class="runlayout">
+          <ol class="steps" id="steps"></ol>
+          <section class="feed" aria-labelledby="feed-title">
+            <h2 class="feed__title" id="feed-title">Agentlər nə edir — canlı lent</h2>
+            <p class="feed__note">AI agentlərinin sənədin hansı hissələrinə baxdığı burada görünür.</p>
+            <ol class="feed__list" id="feed" aria-live="polite" aria-relevant="additions"></ol>
+            <p class="feed__empty" id="feed-empty">Hələ alət çağırışı yoxdur.</p>
+          </section>
+        </div>
+
+        <div class="alert alert--error" id="run-error" role="alert" hidden>
+          <h2 class="alert__title">Yoxlama dayandı: <span id="error-step"></span></h2>
+          <p id="error-text"></p>
+          <p class="alert__note">Tamamlanmış mərhələlər saxlanılıb — davam etdirəndə təkrarlanmır.</p>
+          <div class="row">
+            <button class="btn btn--primary" type="button" id="retry-btn">
+              <span class="icon" data-icon="refresh" aria-hidden="true"></span>Yoxlamanı davam etdir
+            </button>
+            <button class="btn" type="button" id="error-new">Yeni yoxlama</button>
+          </div>
+        </div>
+
+        <div class="alert alert--error" id="ingest-error" role="alert" hidden>
+          <h2 class="alert__title">Fayl oxunmadı</h2>
+          <p id="ingest-error-text"></p>
+          <button class="btn" type="button" id="ingest-new">Başqa fayl yüklə</button>
+        </div>
+      </section>
+
+      <!-- ── Nəticə ────────────────────────────────────────────────────── -->
+      <section class="view" id="view-results" aria-labelledby="res-plan" hidden>
+        <header class="reshead" id="reshead">
+          <div class="reshead__main">
+            <p class="kicker">Biznes plan <span class="tag tag--demo" id="res-demo" hidden>Demo</span></p>
+            <h1 class="reshead__title" id="res-plan"></h1>
+            <p class="resstatus">
+              <span class="statuspill" id="res-status"><span class="statuspill__dot" aria-hidden="true"></span><span class="sr-only">Hazırlıq statusu: </span><span id="res-status-label"></span></span>
+              <span class="resstatus__run" id="res-runstate"></span>
+            </p>
+            <dl class="docmeta">
+              <div><dt><span class="icon" data-icon="fileText" aria-hidden="true"></span><span class="sr-only">Fayl</span></dt><dd id="res-file"></dd></div>
+              <div><dt><span class="icon" data-icon="layers" aria-hidden="true"></span><span class="sr-only">Versiya</span></dt><dd id="res-version"></dd></div>
+            </dl>
+          </div>
+          <div class="reshead__actions">
+            <button class="btn btn--small reshead__print" type="button" id="print-btn">
+              <span class="icon" data-icon="printer" aria-hidden="true"></span>Hesabatı çap et
+            </button>
+            <button class="btn btn--small" type="button" id="res-newversion">
+              <span class="icon" data-icon="upload" aria-hidden="true"></span>Yeni versiya yüklə
+            </button>
+          </div>
+        </header>
+
+        <div class="tabsbar"><div class="tabs" role="tablist" aria-label="Nəticə bölmələri" id="tabs">
+          <button class="tab" role="tab" id="tab-xulase" aria-controls="panel-xulase"
+                  aria-selected="true" tabindex="0">Nəticə</button>
+          <button class="tab" role="tab" id="tab-maliyye" aria-controls="panel-maliyye"
+                  aria-selected="false" tabindex="-1">Maliyyə <span class="tab__count" id="count-maliyye"></span></button>
+          <button class="tab" role="tab" id="tab-iqtisadi" aria-controls="panel-iqtisadi"
+                  aria-selected="false" tabindex="-1"><span class="tab__full">İqtisadi təhlil</span><span class="tab__short">İqtisadi</span> <span class="tab__count" id="count-iqtisadi"></span></button>
+          <button class="tab" role="tab" id="tab-teleb" aria-controls="panel-teleb"
+                  aria-selected="false" tabindex="-1"><span class="tab__full">Standart tələblər</span><span class="tab__short">Tələblər</span> <span class="tab__count" id="count-teleb"></span></button>
+          <button class="tab" role="tab" id="tab-elave" aria-controls="panel-elave"
+                  aria-selected="false" tabindex="-1"><span class="tab__full">Əlavə tələblər</span><span class="tab__short">Əlavə</span> <span class="tab__count" id="count-elave"></span></button>
+          <button class="tab" role="tab" id="tab-bosyer" aria-controls="panel-bosyer"
+                  aria-selected="false" tabindex="-1">Boş yerlər <span class="tab__count" id="count-bosyer"></span></button>
+          <button class="tab" role="tab" id="tab-suallar" aria-controls="panel-suallar"
+                  aria-selected="false" tabindex="-1"><span class="tab__full">Suallar və sənədlər</span><span class="tab__short">Suallar</span> <span class="tab__count" id="count-suallar"></span></button>
+          <button class="tab" role="tab" id="tab-muqayise" aria-controls="panel-muqayise"
+                  aria-selected="false" tabindex="-1">Müqayisə</button>
+          <button class="tab" role="tab" id="tab-agentler" aria-controls="panel-agentler"
+                  aria-selected="false" tabindex="-1">Agentlər <span class="tab__count" id="count-agentler"></span></button>
+        </div>
+          <!-- Sığmayan tablar: "Daha çox" menyusu (static/app.js → layoutTabs). Tablar DOM-da qalır — ?tab= işləyir. -->
+          <div class="tabsmore" id="tabs-more-wrap" hidden>
+            <button class="tabsmore__btn" type="button" id="tabs-more" aria-haspopup="menu" aria-expanded="false"
+                    aria-controls="tabs-menu"><span id="tabs-more-label">Daha çox</span>
+              <span class="icon" data-icon="chevronDown" aria-hidden="true"></span></button>
+            <div class="tabsmore__menu" id="tabs-menu" role="menu" aria-labelledby="tabs-more" hidden></div>
+          </div>
+        </div>
+
+        <!-- Nəticə -->
+        <div class="panel panel--report" id="panel-xulase" role="tabpanel" aria-labelledby="tab-xulase" tabindex="0">
+          <article class="report">
+            <section class="report__sec" aria-labelledby="sum-title">
+              <h2 class="report__h" id="sum-title">Yoxlamanın nəticəsi</h2>
+              <div class="report__lead" id="sum-text"></div>
+              <p class="overview__econ" id="sum-econ" hidden></p>
+              <p class="report__auto">
+                <span class="icon" data-icon="info" aria-hidden="true"></span>
+                <span><span id="sum-auto">Avtomatik yoxlama nəticəsidir. İnsan tərəfindən təsdiqlənməyib.</span>
+                  <a class="report__link" href="#about" id="about-link">Yoxlama haqqında</a></span>
+              </p>
+              <div class="report__notice" id="sum-unchecked" role="status" hidden>
+                <p id="sum-unchecked-text"></p>
+                <button class="btn btn--small" type="button" id="sum-retry" hidden>
+                  <span class="icon" data-icon="refresh" aria-hidden="true"></span>Bu qrupları yenidən yoxla
+                </button>
+              </div>
+            </section>
+
+            <section class="report__sec" aria-labelledby="fix-title">
+              <h2 class="report__h" id="fix-title">Nə düzəltmək lazımdır</h2>
+              <p class="report__sub" id="fix-sub"></p>
+              <ol class="fixes" id="fixes"></ol>
+              <ol class="fixes" id="fixes-more" hidden></ol>
+              <button class="report__more" type="button" id="fixes-toggle" aria-expanded="false" aria-controls="fixes-more" hidden></button>
+              <p class="report__empty" id="fixes-empty" hidden>Düzəliş tələb edən bənd tapılmadı.</p>
+              <div class="report__aside" id="fix-aside"></div>
+            </section>
+
+            <section class="report__sec" aria-labelledby="finsum-title">
+              <h2 class="report__h" id="finsum-title">Maliyyə yoxlaması</h2>
+              <p class="report__sub">“Uyğun” — plandakı rəqəm planın öz cədvəllərindən yenidən hesablanmış
+                rəqəmlə üst-üstə düşür. Bu, layihənin sərfəli olduğunu göstərmir.</p>
+              <p class="report__empty" id="finsum-empty" hidden>Maliyyə yoxlaması aparılmayıb.</p>
+              <div class="tablewrap">
+                <table class="fintable" id="finsum">
+                  <caption class="sr-only">Maliyyə yoxlamasının nəticəsi</caption>
+                  <thead><tr>
+                    <th scope="col">Göstərici</th><th scope="col" class="num">Planda</th>
+                    <th scope="col" class="num">Yenidən hesablanmış</th><th scope="col">Nəticə</th>
+                    <th scope="col"><span class="sr-only">Hesablama və mənbə</span></th>
+                  </tr></thead>
+                  <tbody id="finsum-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <nav class="report__links" aria-label="Ətraflı bölmələr">
+              <button class="golink" type="button" data-goto="panel-teleb">
+                <span class="golink__title">Bütün tələblər</span><span class="golink__sub" id="go-teleb-sub">Hər tələbin statusu, sitatı və tələblər xəritəsi</span>
+                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
+              <button class="golink" type="button" data-goto="panel-maliyye">
+                <span class="golink__title">Maliyyə — ətraflı</span><span class="golink__sub">Hesablama qaydaları, mənbələr və qrafiklər</span>
+                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
+              <button class="golink" type="button" data-goto="panel-bosyer">
+                <span class="golink__title">Doldurulmamış yerlər</span><span class="golink__sub" id="go-bosyer-sub">Sənəddə boş qalan yerlərin siyahısı</span>
+                <span class="icon" data-icon="chevronRight" aria-hidden="true"></span></button>
+            </nav>
+
+            <section class="report__sec about" id="about" aria-labelledby="about-title" tabindex="-1">
+              <h2 class="report__h" id="about-title">Yoxlama haqqında</h2>
+              <h3 class="about__h">Nə yoxlanılır</h3>
+              <p>Tətbiq planın mətnini standart tələblər siyahısı ilə tutuşdurur, maliyyə rəqəmlərini planın
+                öz cədvəllərindən yenidən hesablayır və sənəddə doldurulmamış yerləri tapır.</p>
+              <h3 class="about__h">AI-ın rolu</h3>
+              <p>Sənədi AI oxuyur: tələbin cavabını və rəqəmin sənəddəki yerini tapır, hərfi sitat göstərir.
+                Sitat sənədlə proqram tərəfindən tutuşdurulur — təsdiqlənməyən cavab qəbul edilmir.
+                Rəqəmləri AI hesablamır. Bu səhifədəki nəticə və düzəlişlər yalnız təsdiqlənmiş
+                tapıntılardan qurulub; AI yeni problem, prioritet və ya rəqəm əlavə etmir.</p>
+              <h3 class="about__h">Status necə müəyyən edilir</h3>
+              <p>Qayda ilə, AI-ın fikri ilə yox: kritik maliyyə uyğunsuzluğu və ya tamamilə cavabsız tələb —
+                “Hazır deyil”; kiçik fərq, natamam tələb, boş yer və ya yoxlanıla bilməyən bənd —
+                “Düzəliş lazımdır”. Şərti planda açıq istisna edilən tələb (məs. “kredit varsa”) problem sayılmır.</p>
+              <h3 class="about__h">Nə yoxlanılmır</h3>
+              <p>Hazırlıq statusu (“Hazır deyil” / “Düzəliş lazımdır”) yalnız sənədin tamlığına aiddir. Layihənin
+                iqtisadi riski <strong>ayrıca</strong>, “İqtisadi təhlil” tabında qiymətləndirilir: planın öz rəqəmləri
+                arasındakı uyğunluq, həssaslıq (kodun hesabı) və bazar göstəriciləri ilə tutuşdurma — yalnız mənbəsi və
+                tarixi göstərilmiş benchmark varsa; yoxdursa, “yoxlanıla bilməz” yazılır, təxmin edilmir. Hüquqi
+                düzgünlük, şəkillərin məzmunu və imza/möhürün həqiqiliyi yoxlanılmır; əlavə sənədlər yalnız yükləndikdə
+                yoxlanılır. Bu nəticə investisiya qərarı deyil.</p>
+              <h3 class="about__h">Bu nəticə</h3>
+              <p id="about-result">Avtomatik yoxlama nəticəsidir. İnsan ekspert və ya komitə tərəfindən təsdiqlənməyib.</p>
+              <h3 class="about__h">Yoxlamanın əhatəsi</h3>
+              <ul class="scope__list" id="scope-list"></ul>
+            </section>
+          </article>
+        </div>
+
+        <!-- Maliyyə -->
+        <div class="panel" id="panel-maliyye" role="tabpanel" aria-labelledby="tab-maliyye" tabindex="0" hidden>
+          <h2 class="print-only print-title">Maliyyə yoxlamaları</h2>
+          <div class="toolbar stickyrow">
+            <div class="chips" role="group" aria-label="Maliyyə süzgəci">
+              <button class="chip is-on" type="button" data-fin="hamisi" aria-pressed="true">Hamısı <span class="chip__count" id="fin-c-hamisi"></span></button>
+              <button class="chip" type="button" data-fin="problem" aria-pressed="false">Problemlilər <span class="chip__count" id="fin-c-problem"></span></button>
+              <button class="chip" type="button" data-fin="skip" aria-pressed="false">Yoxlanılmayanlar <span class="chip__count" id="fin-c-skip"></span></button>
+            </div>
+          </div>
+          <p class="empty" id="fin-empty" hidden></p>
+          <div class="tablewrap">
+            <table class="table table--rows" id="fin-table">
+              <caption class="sr-only">Maliyyə yoxlamaları</caption>
+              <thead><tr>
+                <th scope="col">Yoxlama</th><th scope="col" class="num">Planda</th>
+                <th scope="col" class="num">Hesablama</th><th scope="col" class="num">Fərq</th>
+                <th scope="col">Status</th><th scope="col" class="fin__go"><span class="sr-only">Ətraflı</span></th>
+              </tr></thead>
+              <tbody id="fin-body"></tbody>
+            </table>
+          </div>
+          <p class="alert alert--warn" id="fin-notfound" hidden></p>
+          <h2 class="panel__title panel__title--spaced charts-head">Planın rəqəmləri qrafiklərdə</h2>
+          <p class="panel__lead charts-head">Bütün dəyərlər planın öz cədvəllərindən götürülüb, toplamalar
+            ayrıca yenidən aparılıb. Məlumat çatmayanda qrafik qurulmur.</p>
+          <div class="charts" id="charts"></div>
+        </div>
+
+        <!-- Standart tələblər -->
+        <!-- İqtisadi təhlil -->
+        <div class="panel" id="panel-iqtisadi" role="tabpanel" aria-labelledby="tab-iqtisadi" tabindex="0" hidden>
+          <h2 class="print-only print-title">İqtisadi təhlil</h2>
+          <div class="econhead" id="econ-head">
+            <div class="econhead__main">
+              <p class="econhead__risk" id="econ-risk"></p>
+              <p class="econhead__state" id="econ-state" role="status"></p>
+            </div>
+            <div class="econhead__actions">
+              <button class="btn btn--small" type="button" id="econ-run">
+                <span class="icon" data-icon="refresh" aria-hidden="true"></span><span id="econ-run-label">İqtisadi təhlili başlat</span></button>
+              <button class="btn btn--small" type="button" id="econ-fresh" hidden
+                      title="Saxlanmış yerlər silinir, model sənədi yenidən oxuyur (bir model çağırışı)">Yenidən oxu (model ilə)</button>
+            </div>
+          </div>
+          <p class="econhead__note" id="econ-notes" hidden></p>
+          <p class="econnote">Uyğunluq statusundan ayrı nəticədir. Rəqəmləri AI hesablamır: hər rəqəm ya sənəddən
+            (yeri və hərfi sitatı ilə), ya kodun hesabından gəlir; hər tapıntı deterministik qaydadır.</p>
+          <div class="stats" id="econ-tiles"></div>
+          <div class="chips stickyrow" role="group" aria-label="Tapıntıların süzgəci" id="econ-filters"></div>
+          <ol class="efindings" id="econ-findings"></ol>
+          <section class="econsec sens" id="econ-sens" hidden aria-labelledby="econ-sens-title">
+            <p class="sens__badge" id="econ-sens-badge" hidden></p>
+            <h3 class="sens__title" id="econ-sens-title">Həssaslıq</h3>
+            <p class="sens__lead" id="econ-sens-lead" hidden></p>
+            <div class="tablewrap"><table class="table table--compact sens__table" id="econ-sens-table">
+              <caption class="sr-only">Həssaslıq ssenariləri: NPV, bazadan dəyişmə, IRR və NPV-nin sıfıra endiyi hədd</caption>
+              <thead><tr><th scope="col">Ssenari</th><th scope="col" class="num">NPV</th>
+                <th scope="col" class="num">Bazadan dəyişmə</th><th scope="col" class="num">IRR</th>
+                <th scope="col" class="num"><abbr title="Amilin NPV-ni sıfıra endirən dəyişməsi (və ya güc istifadəsinin səviyyəsi)">Sıfır həddi</abbr></th></tr></thead>
+              <tbody id="econ-sens-body"></tbody></table></div>
+            <p class="sens__caption" id="econ-tornado-title">Hər ssenarinin NPV-yə təsiri — bazadan sola (azalma) və sağa (artım)</p>
+            <div class="tornado" id="econ-tornado" aria-describedby="econ-tornado-title"></div>
+            <details class="sens__how" id="econ-sens-how">
+              <summary>Necə hesablanıb</summary>
+              <ul class="sens__method" id="econ-sens-method"></ul>
+              <p class="econsec__note" id="econ-sens-note"></p>
+            </details>
+          </section>
+          <details class="econsec econrej" id="econ-rejected" hidden>
+            <summary id="econ-rejected-title"></summary>
+            <ul id="econ-rejected-list"></ul>
+          </details>
+        </div>
+
+        <div class="panel" id="panel-teleb" role="tabpanel" aria-labelledby="tab-teleb" tabindex="0" hidden>
+          <h2 class="print-only print-title">Standart tələblər</h2>
+          <p class="coverage" id="req-coverage"></p>
+          <details class="mapbox" id="req-mapbox">
+            <summary>Tələblər xəritəsi</summary>
+            <p class="panel__lead">Hər kvadrat bir tələbdir. Qrupa klikləyəndə həmin qrupun tələbləri açılır.</p>
+            <div class="reqmap" id="req-map"></div>
+            <ul class="maplegend" aria-label="Rənglərin izahı">
+              <li><span class="sq sq--var" aria-hidden="true"></span>cavablandırılıb</li>
+              <li><span class="sq sq--natamam" aria-hidden="true"></span>natamam</li>
+              <li><span class="sq sq--yoxdur" aria-hidden="true"></span>cavabsız</li>
+              <li><span class="sq sq--na" aria-hidden="true"></span>tətbiq edilmir</li>
+              <li><span class="sq sq--sened" aria-hidden="true"></span>ayrıca sənəd</li>
+              <li><span class="sq sq--skip" aria-hidden="true"></span>yoxlanılmadı</li>
+            </ul>
+          </details>
+          <div class="alert alert--warn" id="failed-groups" role="status" hidden>
+            <p id="failed-groups-text"></p>
+            <button class="btn btn--primary" type="button" id="retry-groups-btn">
+              <span class="icon" data-icon="refresh" aria-hidden="true"></span>Uğursuz qrupları yenidən yoxla
+            </button>
+          </div>
+          <div class="toolbar stickyrow">
+            <div class="chips" role="group" aria-label="Status süzgəci">
+              <button class="chip is-on" type="button" data-req="hamisi" aria-pressed="true">Hamısı</button>
+              <button class="chip" type="button" data-req="problem" aria-pressed="false">Problemlilər</button>
+              <button class="chip" type="button" data-req="yoxdur" aria-pressed="false">Yoxdur</button>
+              <button class="chip" type="button" data-req="skip" aria-pressed="false">Yoxlanılmayan</button>
+              <button class="chip" type="button" data-req="sened" aria-pressed="false">Ayrıca sənəd</button>
+            </div>
+            <div class="toolbar__right">
+              <label class="sr-only" for="req-group">Qrup</label>
+              <select class="input input--inline" id="req-group"></select>
+              <label class="sr-only" for="req-search">Axtarış</label>
+              <input class="input input--inline" type="search" id="req-search"
+                     placeholder="Tələb mətnində axtar…" autocomplete="off">
+            </div>
+          </div>
+          <p class="empty" id="req-empty" hidden></p>
+          <div id="req-groups"></div>
+        </div>
+
+        <!-- Əlavə tələblər -->
+        <div class="panel" id="panel-elave" role="tabpanel" aria-labelledby="tab-elave" tabindex="0" hidden>
+          <h2 class="print-only print-title">Əlavə tələblər</h2>
+          <p class="empty" id="extra-empty" hidden>
+            Bu yoxlamada əlavə tələb sənədi yüklənməyib. Yeni yoxlamada "B. Əlavə tələb
+            sənədləri" sahəsindən əlavə edə bilərsiniz.
+          </p>
+          <div id="extra-meta"></div>
+          <ul class="extraresults" id="extra-results"></ul>
+        </div>
+
+        <!-- Boş yerlər -->
+        <div class="panel" id="panel-bosyer" role="tabpanel" aria-labelledby="tab-bosyer" tabindex="0" hidden>
+          <h2 class="print-only print-title">Doldurulmamış yerlər</h2>
+          <p class="empty" id="ph-empty" hidden>Doldurulmamış yer tapılmadı.</p>
+          <div class="tablewrap">
+            <table class="table table--rows" id="ph-table">
+              <caption class="sr-only">Doldurulmamış yerlər</caption>
+              <thead><tr>
+                <th scope="col">İfadə</th><th scope="col">Bölmə</th>
+                <th scope="col">Yer</th><th scope="col">Kontekst</th>
+              </tr></thead>
+              <tbody id="ph-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Agentlər -->
+        <div class="panel" id="panel-agentler" role="tabpanel" aria-labelledby="tab-agentler" tabindex="0" hidden>
+          <h2 class="print-only print-title">Əlavə: agent fəaliyyətinin qısa xülasəsi</h2>
+          <p class="panel__lead agentler-lead">Yoxlama zamanı AI agentlərinin sənədin hansı hissələrinə baxdığı,
+            nə qədər vaxt sərf etdiyi və harada çətinlik çəkdiyi.</p>
+          <dl class="agstats" id="ag-stats"></dl>
+          <ol class="attempts" id="ag-attempts"></ol>
+          <div id="ag-gantts"></div>
+          <div class="agpick" id="ag-pick" role="region" aria-live="polite" hidden></div>
+          <h2 class="panel__title panel__title--spaced ag-all">Bütün hadisələr</h2>
+          <div class="toolbar">
+            <div class="toolbar__right">
+              <label class="sr-only" for="ag-filter">Agent</label>
+              <select class="input input--inline" id="ag-filter"></select>
+              <label class="ack ack--inline"><input type="checkbox" id="ag-errors"> Yalnız xətalar</label>
+            </div>
+          </div>
+          <p class="empty" id="ag-empty" hidden></p>
+          <div class="tablewrap">
+            <table class="table table--compact" id="ag-table">
+              <caption class="sr-only">Agent hadisələri</caption>
+              <thead><tr>
+                <th scope="col">Vaxt</th><th scope="col">Agent</th><th scope="col">Alət</th>
+                <th scope="col">Arqument</th><th scope="col">Nəticə</th>
+                <th scope="col" class="num">Müddət</th><th scope="col">Status</th>
+              </tr></thead>
+              <tbody id="ag-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Suallar və sənədlər -->
+        <div class="panel" id="panel-suallar" role="tabpanel" aria-labelledby="tab-suallar" tabindex="0" hidden>
+          <h2 class="print-only print-title">Ərizəçiyə suallar və tələb olunan sənədlər</h2>
+          <div class="toolbar qtoolbar stickyrow">
+            <div class="chips" role="group" aria-label="Sualların süzgəci" id="q-filters"></div>
+            <div class="qtoolbar__actions">
+              <button class="btn btn--small" type="button" id="q-add-btn">
+                <span class="icon" data-icon="plus" aria-hidden="true"></span>Sual əlavə et</button>
+              <a class="btn btn--small" id="q-letter" href="#" download>
+                <span class="icon" data-icon="fileText" aria-hidden="true"></span>Suallar məktubu (.docx)</a>
+              <button class="btn btn--small" type="button" id="q-print">
+                <span class="icon" data-icon="printer" aria-hidden="true"></span>Çap / PDF</button>
+            </div>
+          </div>
+          <form class="qadd" id="q-add" hidden>
+            <label class="field__label" for="q-add-text">Yeni sual</label>
+            <textarea id="q-add-text" rows="3" maxlength="2000"></textarea>
+            <fieldset class="qadd__docs"><legend>Tələb olunan sənəd</legend><div id="q-add-docs"></div></fieldset>
+            <div class="row"><button class="btn btn--primary btn--small" type="submit">Əlavə et</button>
+              <button class="btn btn--small" type="button" id="q-add-cancel">Ləğv et</button></div>
+          </form>
+          <p class="empty" id="q-empty" hidden></p>
+          <ol class="qlist" id="q-list"></ol>
+          <section class="evbox" aria-labelledby="ev-title">
+            <h3 class="evbox__title" id="ev-title">Əlavə sənədlər</h3>
+            <p class="evbox__hint" id="ev-hint"></p>
+            <form class="evform" id="ev-form">
+              <div class="evform__field"><label class="field__label" for="ev-doc-type">Sənəd növü</label>
+                <select id="ev-doc-type"></select></div>
+              <div class="evform__field"><label class="field__label" for="ev-req">Ayrıca sənəd tələbi (istəyə görə)</label>
+                <select id="ev-req"><option value="">— ümumi plan —</option></select></div>
+              <label class="btn btn--small evform__file"><span class="icon" data-icon="upload" aria-hidden="true"></span>
+                Fayl seç və yüklə<input type="file" id="ev-file" class="sr-only"
+                  accept=".xlsx,.xlsm,.pdf,.docx,.jpg,.jpeg,.png"></label>
+            </form>
+            <p class="evform__status" id="ev-status" role="status"></p>
+            <ul class="evlist" id="ev-list"></ul>
+          </section>
+        </div>
+
+        <!-- Müqayisə -->
+        <div class="panel" id="panel-muqayise" role="tabpanel" aria-labelledby="tab-muqayise" tabindex="0" hidden>
+          <h2 class="print-only print-title">Əvvəlki versiya ilə müqayisə</h2>
+          <p class="empty" id="cmp-empty" hidden></p>
+          <div id="cmp-body"></div>
+          <section class="econsec" id="econ-history" hidden aria-labelledby="econ-history-title">
+            <h3 class="econsec__title" id="econ-history-title">İqtisadi təhlil: sənədlərdən sonra dəyişənlər</h3>
+            <ol class="ehistory" id="econ-history-list"></ol>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ── Detal paneli ────────────────────────────────────────────────────── -->
+<div class="scrim scrim--detail" id="detail-scrim" hidden></div>
+<dialog class="confirm" id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-text delete-warn">
+  <h2 class="confirm__title" id="delete-title">Planı silmək?</h2>
+  <p class="confirm__text" id="delete-text"></p>
+  <p class="confirm__warn" id="delete-warn">Bu əməliyyat geri qaytarılmır: planın bütün versiyaları, hesabatları və yüklənmiş faylları birdəfəlik silinəcək.</p>
+  <p class="confirm__error" id="delete-error" role="alert" hidden></p>
+  <div class="confirm__actions">
+    <button class="btn" type="button" id="delete-cancel">Ləğv et</button>
+    <button class="btn btn--danger-solid" type="button" id="delete-confirm">Planı sil</button>
+  </div>
+</dialog>
+
+<aside class="detail" id="detail" role="dialog" aria-modal="true" aria-labelledby="detail-title" hidden>
+  <header class="detail__head">
+    <h2 class="detail__title" id="detail-title"></h2>
+    <button class="iconbtn" type="button" id="detail-close">
+      <span class="icon" data-icon="x" aria-hidden="true"></span>
+      <span class="sr-only">Bağla</span>
+    </button>
+  </header>
+  <div class="detail__body" id="detail-body"></div>
+</aside>
+
+<!-- ── AI köməkçi ──────────────────────────────────────────────────────── -->
+<section class="aipanel" id="ai-panel" role="dialog" aria-modal="false" aria-labelledby="ai-title" hidden>
+  <header class="aipanel__head">
+    <span class="aipanel__logo" aria-hidden="true"><span class="icon" data-icon="sparkle"></span></span>
+    <div class="aipanel__titles">
+      <h2 class="aipanel__title" id="ai-title">AI köməkçi</h2>
+      <p class="aipanel__sub"><span class="aistatus" id="ai-status" data-state="off"><i aria-hidden="true"></i>
+        <span id="ai-status-text">Yoxlanılır…</span></span><span class="aipanel__tag">Biznes plan üzrə bələdçiniz</span></p>
+    </div>
+    <button class="iconbtn" type="button" id="ai-min" aria-expanded="true" aria-controls="ai-body">
+      <span class="icon" id="ai-min-icon" data-icon="minus" aria-hidden="true"></span>
+      <span class="sr-only" id="ai-min-label">Kiçilt</span>
+    </button>
+    <button class="iconbtn" type="button" id="ai-close">
+      <span class="icon" data-icon="x" aria-hidden="true"></span><span class="sr-only">Bağla</span>
+    </button>
+  </header>
+  <div class="aipanel__body" id="ai-body">
+    <p class="aictx"><span class="aictx__chip" id="ai-context"><span class="icon" data-icon="fileText" aria-hidden="true"></span>
+      <span class="sr-only">Kontekst: </span><span id="ai-context-text">Sənəd yüklənməyib</span></span></p>
+    <p class="aipanel__notice" id="ai-unavailable" role="status" hidden></p>
+    <ol class="ailog" id="ai-log" role="log" aria-live="polite" aria-label="Söhbət"></ol>
+    <div class="aisuggest" id="ai-suggest" role="group" aria-label="Hazır suallar"></div>
+    <form class="aiform" id="ai-form">
+      <label class="sr-only" for="ai-input">Sualınız</label>
+      <textarea class="aiform__input" id="ai-input" rows="1" placeholder="Sualınızı yazın…"
+                aria-describedby="ai-foot"></textarea>
+      <span class="aiform__count" id="ai-count" aria-live="polite"></span>
+      <button class="aiform__send" type="submit" id="ai-send" aria-label="Göndər">
+        <span class="icon" data-icon="arrowUp" aria-hidden="true"></span>
+      </button>
+    </form>
+    <p class="aipanel__foot" id="ai-foot"><span class="aipanel__keys"><kbd>Enter</kbd> göndər · <kbd>Shift</kbd>+<kbd>Enter</kbd> yeni sətir</span>
+      <span>AI cavablarını yoxlayın — status və rəqəmlər yalnız yoxlamanın özündən gəlir.</span>
+    </p>
+    <details class="aitech">
+      <summary>Texniki məlumatlar</summary>
+      <p id="ai-memory"></p>
+      <p>Cavabı bələdçi agent özü verir və ya sualı maliyyə və ya tələb ekspertinə ötürür.</p>
+    </details>
+  </div>
+</section>
+<button class="aifab" type="button" id="ai-fab" aria-controls="ai-panel" aria-expanded="false">
+  <span class="icon" data-icon="sparkle" aria-hidden="true"></span><span class="aifab__label">AI köməkçi</span>
+  <span class="icon aifab__chev" data-icon="chevronUp" aria-hidden="true"></span>
+</button>
+
+<p class="sr-only" id="live" aria-live="polite"></p>
+
+<script src="/static/poll.js"></script>
+<script src="/static/upload.js"></script>
+<script src="/static/charts.js"></script>
+<script src="/static/agents.js"></script>
+<script src="/static/market.js"></script>
+<script src="/static/chat.js"></script>
+<script src="/static/report.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/econ-core.js"></script>
+<script src="/static/economics.js"></script>
+</body>
+</html>
