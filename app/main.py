@@ -588,15 +588,32 @@ async def delete_question(question_id: str) -> dict[str, Any]:
     return {"deleted": question_id}
 
 
+def _letter_ids(ids: str | None) -> list[str] | None:
+    """`?ids=a,b,c` — məktuba daxil ediləcək suallar; verilməsə — bütün açıq suallar."""
+    return [x for x in (ids or "").split(",") if x] if ids is not None else None
+
+
+@app.get("/api/checks/{check_id}/questions/letter")
+async def question_letter_preview(check_id: str, ids: str | None = None) -> dict[str, Any]:
+    """Məktubun önizləməsi (A4) — .docx ilə eyni mətn (questions.letter_content)."""
+    from app.economics import questions
+    from app.economics.service import _company
+    check = _check_or_404(check_id)
+    facts = (storage.econ_get(check_id) or {}).get("facts")
+    return questions.letter_content(check, storage.questions_list(check_id), _company(check, facts) or None,
+                                    _letter_ids(ids))
+
+
 @app.get("/api/checks/{check_id}/questions/letter.docx")
-async def question_letter(check_id: str) -> Any:
+async def question_letter(check_id: str, ids: str | None = None) -> Any:
     from fastapi.responses import Response
 
     from app.economics import questions
     from app.economics.service import _company
     check = _check_or_404(check_id)
     facts = (storage.econ_get(check_id) or {}).get("facts")
-    data = questions.letter_docx(check, storage.questions_list(check_id), _company(check, facts) or None)
+    data = questions.letter_docx(check, storage.questions_list(check_id), _company(check, facts) or None,
+                                 _letter_ids(ids))
     name = f"suallar-{check['plan_id']}-v{check['version']}.docx"
     return Response(data, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     headers={"Content-Disposition": f'attachment; filename="{name}"'})

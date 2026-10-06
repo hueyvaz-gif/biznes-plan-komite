@@ -96,7 +96,7 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
     renderTabCounts(d);
     // Baner, göstəricilər, risk radarı və tapıntılar — views/econ-panel.js ('econ:data' hadisəsi ilə).
     renderRejected(d);
-    renderQuestions(d);
+    // Suallar — views/questions-panel.js ('econ:data').
     renderEvidence(d);
     renderHistory(d);
     renderDocRequirements(d);
@@ -131,14 +131,6 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
     if (typeof layoutTabs === 'function') layoutTabs();
   }
 
-  function docStatus(docType, list) {
-    const li = el('li');
-    li.append(el('span', null, docs()[docType] || docType), document.createTextNode(' — '));
-    if (list && list.length) li.append(el('span', 'docok', '✓ ' + list.map((x) => x.file_name).join(', ')));
-    else li.append(el('span', 'docwait', 'Gözlənilir'));
-    return li;
-  }
-
   function renderRejected(d) {
     const box = $('econ-rejected');
     if (!box) return;
@@ -153,143 +145,6 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
   function focusQuestion(id) {
     const node = document.getElementById(C.domId('q-', id));
     if (node) { node.scrollIntoView({ block: 'start' }); node.focus({ preventScroll: true }); }
-  }
-
-  function questionItem(q, index) {
-    const li = el('li', 'q q--' + q.status + (q.stale ? ' is-stale' : ''));
-    li.id = C.domId('q-', q.id);
-    li.tabIndex = -1;
-    const head = el('div', 'q__head');
-    head.append(el('span', 'q__no', (index + 1) + '.'),
-      el('span', 'tag', q.origin === 'qayda' ? 'Qayda' : 'Komitə'));
-    if (q.severity) head.append(badge(C.severityCls(q.severity), C.SEVERITY[q.severity]));
-    if (q.edited) head.append(el('span', 'tag', 'redaktə edilib'));
-    if (q.stale) head.append(el('span', 'tag', 'qayda artıq bayraq vermir'));
-    li.append(head);
-
-    if (E.editing === q.id) {
-      const area = el('textarea', 'q__edit');
-      area.value = q.text;
-      area.rows = 4;
-      area.setAttribute('aria-label', 'Sualın mətni');
-      const save = el('button', 'btn btn--primary btn--small', 'Saxla');
-      save.type = 'button';
-      save.addEventListener('click', async () => {
-        try { await patch('/api/questions/' + encodeURIComponent(q.id), { text: area.value }); E.editing = null; load(); }
-        catch (err) { announce(err.message); }
-      });
-      const cancel = el('button', 'btn btn--small', 'Ləğv et');
-      cancel.type = 'button';
-      cancel.addEventListener('click', () => { E.editing = null; renderQuestions(E.data); });
-      li.append(area, el('div', 'row'));
-      li.lastChild.append(save, cancel);
-      setTimeout(() => area.focus(), 0);
-    } else {
-      li.append(el('p', 'q__text', q.text));
-    }
-
-    if (C.answerForm(q) === 'sened') {
-      const list = el('ul', 'efinding__docs');
-      q.documents.forEach((dt) => list.append(docStatus(dt, C.evidenceFor(q, dt, E.data.evidence))));
-      li.append(list);
-    } else {
-      li.append(el('p', 'answer--written', C.WRITTEN_ANSWER));
-    }
-
-    const ctrl = el('div', 'q__ctrl');
-    const label = el('label', 'q__label', 'Status');
-    const select = el('select');
-    select.id = 'qs-' + li.id;
-    label.htmlFor = select.id;
-    Object.entries(qStatuses()).forEach(([value, text]) => {
-      const o = el('option', null, text);
-      o.value = value;
-      if (value === q.status) o.selected = true;
-      select.append(o);
-    });
-    select.disabled = !!state.demo;
-    select.addEventListener('change', async () => {
-      try { await patch('/api/questions/' + encodeURIComponent(q.id), { status: select.value }); announce('Status yeniləndi.'); load(); }
-      catch (err) { announce(err.message); }
-    });
-    ctrl.append(label, select);
-    if (q.status === 'qebul' || q.status === 'redd') {
-      const who = el('input');
-      who.placeholder = 'Qərar verən komitə üzvü';
-      who.value = q.decided_by || '';
-      who.setAttribute('aria-label', 'Qərar verən komitə üzvü');
-      const note = el('input');
-      note.placeholder = 'Qeyd';
-      note.value = q.note || '';
-      note.setAttribute('aria-label', 'Qərarın qeydi');
-      const save = el('button', 'btn btn--small', 'Qərarı saxla');
-      save.type = 'button';
-      save.addEventListener('click', async () => {
-        try { await patch('/api/questions/' + encodeURIComponent(q.id), { decided_by: who.value, note: note.value }); announce('Qərar saxlanıldı.'); load(); }
-        catch (err) { announce(err.message); }
-      });
-      ctrl.append(who, note, save);
-    }
-    li.append(ctrl);
-
-    if (!state.demo) {
-      const actions = el('div', 'q__actions');
-      const edit = el('button', 'btn btn--small', 'Redaktə et');
-      edit.type = 'button';
-      edit.addEventListener('click', () => { E.editing = q.id; renderQuestions(E.data); });
-      const up = el('button', 'btn btn--small');
-      up.type = 'button';
-      up.append(icon('upload'), el('span', null, 'Sənəd yüklə'));
-      up.addEventListener('click', () => pickAndUpload({ question_id: q.id, doc_type: q.documents[0] }));
-      actions.append(edit, up);
-      if (q.origin === 'komite') {
-        const del = el('button', 'btn btn--small btn--danger', 'Sil');
-        del.type = 'button';
-        del.addEventListener('click', async () => {
-          try { await api.del('/api/questions/' + encodeURIComponent(q.id)); announce('Sual silindi.'); load(); }
-          catch (err) { announce(err.message); }
-        });
-        actions.append(del);
-      }
-      li.append(actions);
-    }
-    return li;
-  }
-
-  function renderQuestions(d) {
-    const list = $('q-list');
-    if (!list) return;
-    const qs = (d && d.questions) || [];
-    const chips = $('q-filters');
-    chips.replaceChildren();
-    C.questionFilters(qs, qStatuses()).forEach(({ id, label, count }) => {
-      const b = el('button', 'chip' + (E.qFilter === id ? ' is-on' : ''));
-      b.type = 'button';
-      b.setAttribute('aria-pressed', E.qFilter === id ? 'true' : 'false');
-      b.append(document.createTextNode(label + ' '), el('span', 'chip__count', String(count)));
-      b.addEventListener('click', () => { E.qFilter = id; renderQuestions(E.data); });
-      chips.append(b);
-    });
-    const shown = C.filterQuestions(qs, E.qFilter);
-    list.replaceChildren(...shown.map(questionItem));
-    const empty = $('q-empty');
-    empty.hidden = shown.length > 0;
-    empty.textContent = C.emptyQuestionsText(d, qs.length);
-    const letter = $('q-letter');
-    if (E.check) letter.href = '/api/checks/' + encodeURIComponent(E.check.id) + '/questions/letter.docx';
-    letter.hidden = !!state.demo || !qs.length;
-    $('q-add-btn').hidden = !!state.demo || !d || d.state === 'yoxdur';
-    const docBox = $('q-add-docs');
-    if (!docBox.children.length) {
-      Object.entries(docs()).forEach(([id, text]) => {
-        const lab = el('label', 'check');
-        const box = el('input');
-        box.type = 'checkbox';
-        box.value = id;
-        lab.append(box, document.createTextNode(' ' + text));
-        docBox.append(lab);
-      });
-    }
   }
 
   /* ── Əlavə sənədlər ───────────────────────────────────────────────────── */
@@ -420,21 +275,6 @@ import { layoutTabs, selectTab, setTabCount } from '../shell/tabs.js';
       upload(e.target.files[0], { doc_type: $('ev-doc-type').value, req_code: $('ev-req').value });
       e.target.value = '';
     });
-    $('q-add-btn').addEventListener('click', () => { $('q-add').hidden = false; $('q-add-text').focus(); });
-    $('q-add-cancel').addEventListener('click', () => { $('q-add').hidden = true; $('q-add-btn').focus(); });
-    $('q-add').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const documents = [...document.querySelectorAll('#q-add-docs input:checked')].map((x) => x.value);
-      try {
-        await api.post('/api/checks/' + encodeURIComponent(E.check.id) + '/questions', { text: $('q-add-text').value, documents });
-        $('q-add-text').value = '';
-        document.querySelectorAll('#q-add-docs input').forEach((x) => { x.checked = false; });
-        $('q-add').hidden = true;
-        announce('Sual əlavə olundu.');
-        load();
-      } catch (err) { announce(err.message); setStatus('q-empty', err.message); $('q-empty').hidden = false; }
-    });
-    $('q-print').addEventListener('click', () => { selectTab('panel-suallar', false); window.print(); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();

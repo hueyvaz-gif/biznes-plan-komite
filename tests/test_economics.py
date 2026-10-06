@@ -458,6 +458,16 @@ def test_suallar_api_redaktə_status_silmə_və_məktub(done_check):
     text = "\n".join(p.text for p in Document(io.BytesIO(letter.content)).paragraphs)
     assert "Komitənin dəqiqləşdirdiyi sual" in text and "Excel maliyyə modeli" in text
 
+    # Önizləmə .docx ilə eyni mətndir; ?ids= yalnız seçilmiş açıq sualları saxlayır
+    preview = client.get(f"/api/checks/{done_check}/questions/letter").json()
+    assert {"title", "date", "to", "subject", "questions", "documents", "signature"} <= set(preview)
+    assert any(x["text"] == "Komitənin dəqiqləşdirdiyi sual" for x in preview["questions"])
+    one = client.get(f"/api/checks/{done_check}/questions/letter", params={"ids": added["id"]}).json()
+    assert [x["id"] for x in one["questions"]] == [added["id"]] and one["documents"] == ["Excel maliyyə modeli (düsturlarla)"]
+    only = client.get(f"/api/checks/{done_check}/questions/letter.docx", params={"ids": added["id"]})
+    only_text = " ".join(p.text for p in Document(io.BytesIO(only.content)).paragraphs)
+    assert "Əlavə sual" in only_text and "Komitənin dəqiqləşdirdiyi sual" not in only_text
+
     assert client.delete(f"/api/questions/{added['id']}").status_code == 200
     assert client.delete(f"/api/questions/{added['id']}").status_code == 404
 

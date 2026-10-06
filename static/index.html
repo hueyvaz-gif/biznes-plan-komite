@@ -743,26 +743,32 @@
         <!-- Suallar və sənədlər -->
         <div class="panel" id="panel-suallar" role="tabpanel" aria-labelledby="tab-suallar" tabindex="0" hidden>
           <h2 class="print-only print-title">Ərizəçiyə suallar və tələb olunan sənədlər</h2>
-          <div class="toolbar qtoolbar stickyrow">
-            <div class="chips" role="group" aria-label="Sualların süzgəci" id="q-filters"></div>
-            <div class="qtoolbar__actions">
+          <section class="finv__lead" aria-labelledby="q-title">
+            <h2 class="sumv__eyebrow" id="q-title">Suallar və sənədlər</h2>
+            <p class="sumv__sentence" id="q-lead"></p>
+          </section>
+          <nav class="qpipe" id="q-pipeline" aria-label="Sualların statusu üzrə süzgəc"></nav>
+          <div class="qprog" id="q-progress" role="progressbar" aria-label="Bağlanmış suallar" aria-valuemin="0"></div>
+          <div class="toolbar stickyrow qbar">
+            <div id="q-viewswitch"></div>
+            <div class="qbar__actions">
               <button class="btn btn--small" type="button" id="q-add-btn">
                 <span class="icon" data-icon="plus" aria-hidden="true"></span>Sual əlavə et</button>
-              <a class="btn btn--small" id="q-letter" href="#" download>
-                <span class="icon" data-icon="fileText" aria-hidden="true"></span>Suallar məktubu (.docx)</a>
+              <button class="btn btn--small" type="button" id="q-letter-btn">
+                <span class="icon" data-icon="fileText" aria-hidden="true"></span>Məktub (.docx)</button>
               <button class="btn btn--small" type="button" id="q-print">
-                <span class="icon" data-icon="printer" aria-hidden="true"></span>Çap / PDF</button>
+                <span class="icon" data-icon="printer" aria-hidden="true"></span>Çap</button>
             </div>
           </div>
           <form class="qadd" id="q-add" hidden>
-            <label class="field__label" for="q-add-text">Yeni sual</label>
-            <textarea id="q-add-text" rows="3" maxlength="2000"></textarea>
-            <fieldset class="qadd__docs"><legend>Tələb olunan sənəd</legend><div id="q-add-docs"></div></fieldset>
+            <label class="field__label" for="q-add-text">Yeni sual (komitə üzvü)</label>
+            <textarea id="q-add-text" rows="3" maxlength="2000" aria-describedby="q-add-hint"></textarea>
+            <p class="qc__hint" id="q-add-hint">Ctrl+Enter — əlavə et · Esc — ləğv et</p>
+            <fieldset class="qadd__docs"><legend>Tələb olunan sənəd (boş qalsa — yazılı cavab)</legend><div id="q-add-docs"></div></fieldset>
             <div class="row"><button class="btn btn--primary btn--small" type="submit">Əlavə et</button>
               <button class="btn btn--small" type="button" id="q-add-cancel">Ləğv et</button></div>
           </form>
-          <p class="empty" id="q-empty" hidden></p>
-          <ol class="qlist" id="q-list"></ol>
+          <div id="q-view"></div>
           <section class="evbox" aria-labelledby="ev-title">
             <h3 class="evbox__title" id="ev-title">Əlavə sənədlər</h3>
             <p class="evbox__hint" id="ev-hint"></p>

@@ -100,13 +100,41 @@ def is_open(question: dict[str, Any]) -> bool:
 
 # ── Məktub (.docx) ─────────────────────────────────────────────────────────
 
-def letter_docx(check: dict[str, Any], questions: list[dict[str, Any]], company: str | None = None) -> bytes:
-    """Rəsmi məktub: başlıq, tarix, müraciət, nömrələnmiş suallar, tələb olunan sənədlər, imza yeri."""
+def letter_content(check: dict[str, Any], questions: list[dict[str, Any]], company: str | None = None,
+                   ids: list[str] | None = None) -> dict[str, Any]:
+    """Məktubun mətni — .docx və ekrandakı önizləmə EYNİ mənbədən. `ids` verilsə, yalnız seçilmiş açıq suallar."""
+    chosen = [q for q in questions if is_open(q) and (ids is None or q["id"] in ids)]
+    plan = check.get("plan_name") or check["plan_id"]
+    docs: list[str] = []
+    for q in chosen:
+        for d in q["documents"]:
+            if d not in docs:
+                docs.append(d)
+    return {
+        "title": "BİZNES PLAN QİYMƏTLƏNDİRMƏ KOMİTƏSİ",
+        "date": datetime.now(timezone.utc).strftime("%d.%m.%Y"),
+        "number": "____________",
+        "to": company or plan,
+        "subject": f"“{plan}” biznes planı (versiya {check['version']}, {check['file_name']}) üzrə əlavə suallar və sənəd sorğusu",
+        "salutation": "Hörmətli təşəbbüskar,",
+        "intro": ("Təqdim etdiyiniz biznes planın ilkin iqtisadi təhlili zamanı aşağıdakı məsələlərin aydınlaşdırılması "
+                  "zəruri hesab edilmişdir. Cavablarınızı və göstərilən sənədləri təqdim etməyinizi xahiş edirik."),
+        "questions": [{"id": q["id"], "text": q["text"], "written": not q["documents"]} for q in chosen],
+        "documents": [DOCUMENTS.get(d, d) for d in docs],
+        "note": ("Qeyd: bu məktub avtomatik ilkin iqtisadi təhlilin nəticəsi əsasında hazırlanıb və komitə üzvü "
+                 "tərəfindən yoxlanılıb. İnvestisiya qərarı deyil."),
+        "signature": "Komitə adından: ______________________        İmza: ____________",
+    }
+
+
+def letter_docx(check: dict[str, Any], questions: list[dict[str, Any]], company: str | None = None,
+                ids: list[str] | None = None) -> bytes:
+    """Rəsmi məktub: başlıq, tarix, nömrə, müraciət, nömrələnmiş suallar, tələb olunan sənədlər, imza yeri."""
     from docx import Document
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Pt
 
-    open_questions = [q for q in questions if is_open(q)]
+    c = letter_content(check, questions, company, ids)
     document = Document()
     style = document.styles["Normal"]
     style.font.name = "Times New Roman"
@@ -114,49 +142,37 @@ def letter_docx(check: dict[str, Any], questions: list[dict[str, Any]], company:
 
     head = document.add_paragraph()
     head.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = head.add_run("BİZNES PLAN QİYMƏTLƏNDİRMƏ KOMİTƏSİ")
-    run.bold = True
+    head.add_run(c["title"]).bold = True
 
-    today = datetime.now(timezone.utc).strftime("%d.%m.%Y")
     meta = document.add_paragraph()
-    meta.add_run(f"Tarix: {today}\n")
-    meta.add_run(f"Nömrə: ____________\n")
-    meta.add_run(f"Kimə: {company or check.get('plan_name') or check['plan_id']}")
+    meta.add_run(f"Tarix: {c['date']}\n")
+    meta.add_run(f"Nömrə: {c['number']}\n")
+    meta.add_run(f"Kimə: {c['to']}")
 
     subject = document.add_paragraph()
     subject.add_run("Mövzu: ").bold = True
-    subject.add_run(f"“{check.get('plan_name') or check['plan_id']}” biznes planı (versiya {check['version']}, "
-                    f"{check['file_name']}) üzrə əlavə suallar və sənəd sorğusu")
+    subject.add_run(c["subject"])
 
-    document.add_paragraph("Hörmətli təşəbbüskar,")
-    document.add_paragraph(
-        "Təqdim etdiyiniz biznes planın ilkin iqtisadi təhlili zamanı aşağıdakı məsələlərin aydınlaşdırılması "
-        "zəruri hesab edilmişdir. Cavablarınızı və göstərilən sənədləri təqdim etməyinizi xahiş edirik.")
+    document.add_paragraph(c["salutation"])
+    document.add_paragraph(c["intro"])
 
-    if open_questions:
+    if c["questions"]:
         document.add_paragraph("Suallar", style="Heading 2")
-        for q in open_questions:
+        for q in c["questions"]:
             item = document.add_paragraph(q["text"], style="List Number")
-            if not q["documents"]:
+            if q["written"]:
                 item.add_run(" (yazılı cavab)").italic = True
     else:
         document.add_paragraph("Açıq sual yoxdur.")
 
-    docs = []
-    for q in open_questions:
-        for d in q["documents"]:
-            if d not in docs:
-                docs.append(d)
-    if docs:
+    if c["documents"]:
         document.add_paragraph("Tələb olunan sənədlər", style="Heading 2")
-        for d in docs:
-            document.add_paragraph(DOCUMENTS.get(d, d), style="List Bullet")
+        for d in c["documents"]:
+            document.add_paragraph(d, style="List Bullet")
 
-    document.add_paragraph(
-        "Qeyd: bu məktub avtomatik ilkin iqtisadi təhlilin nəticəsi əsasında hazırlanıb və komitə üzvü "
-        "tərəfindən yoxlanılıb. İnvestisiya qərarı deyil.")
+    document.add_paragraph(c["note"])
     sign = document.add_paragraph()
-    sign.add_run("\nKomitə adından: ______________________        İmza: ____________")
+    sign.add_run("\n" + c["signature"])
 
     buffer = io.BytesIO()
     document.save(buffer)
