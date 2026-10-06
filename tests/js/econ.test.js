@@ -205,3 +205,12 @@ test('həssaslıq başlığı: həssas amil yoxdursa, mənfi ssenari yoxdursa, b
   assert.equal(C.thresholdText(null), '—');
   assert.equal(C.thresholdText({ value: -12.4, kind: 'change' }), '−12%');
 });
+
+test('needsAction: tab nişanı və "Bayraqlar və suallar" eyni say; xülasə tapıntısı sayılmır', () => {
+  const list = [F('flag', 'yuksek', { summary: true }), F('flag', 'orta'), F('info', 'asagi', { question: 'S?' }), F('info', 'asagi'), F('ok')];
+  const d = { result: { findings: list }, open_questions: 0 };
+  const chip = C.findingFilterCounts(list).find((x) => x.id === 'flag').count;
+  assert.equal(C.tabCounts(d).flags, 2);
+  assert.equal(chip, 2);
+  assert.equal(C.filterFindings(list, 'flag').some((f) => f.summary), false);
+});

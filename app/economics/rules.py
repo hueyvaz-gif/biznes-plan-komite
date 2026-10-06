@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from app.economics import benchmarks, sensitivity
+from app.economics import benchmarks, scenario, sensitivity
 from app.economics.catalog import FIGURES, reality_docs, rule_docs, scenario_docs
 from app.finance_tools import read_row
 from app.numbers import format_az
@@ -126,6 +126,35 @@ class Context:
         if not got.get("ok"):
             return None
         return sensitivity.align(self.years, {"years": got["years"], "values": got["values"]})
+
+    def cash_row(self, key: str) -> list[float] | None:
+        """Pul axını cədvəlinin sətri (planın öz cədvəlindən, illərə düzülmüş): row_tax, row_residual …"""
+        table, label = self.claimed.get("cashflow_table_id"), self.claimed.get(key)
+        if not (self.years and table and label):
+            return None
+        got = read_row(self.doc, table, label)
+        if not got.get("ok"):
+            return None
+        return sensitivity.align(self.years, {"years": got["years"], "values": got["values"]})
+
+    def fig(self, key: str) -> float | None:
+        v = (self.f.get(key) or {}).get("value")
+        return float(v) if isinstance(v, (int, float)) else None
+
+    def scenario_model(self) -> dict[str, Any] | None:
+        """Ssenari modelinin girişləri — hamısı planın təsdiqlənmiş rəqəmləri (app/economics/scenario.py)."""
+        rate = self.claimed.get("discount_rate_pct")
+        if not self.flows or rate is None:
+            return None
+        return scenario.model_inputs(
+            self.years, self.flows, rate, residual=self.residual(), tax=self.cash_row("row_tax"),
+            revenue=self.aligned("revenue"), raw=self.aligned("raw_material_cost"), volume=self.aligned("sales_volume_t"),
+            depreciation=self.aligned("depreciation"), tax_rate_pct=self.fig("profit_tax_rate_pct"),
+            margin_per_t=self.fig("margin_per_t"), price_per_t=self.fig("price_avg_per_t"), raw_per_t=self.fig("raw_cost_per_t"),
+            practical_capacity_t=self.claimed.get("practical_capacity_t"),
+            fixed_assets_investment=self.claimed.get("fixed_assets_investment"),
+            receivable_days=self.fig("receivable_days"), inventory_days=self.fig("inventory_days"),
+            payable_days=self.fig("payable_days"))
 
     def residual_source(self) -> dict[str, Any]:
         return {"kind": "sened", "location": self.claimed.get("cashflow_table_id"),
@@ -624,29 +653,32 @@ def _short(text: str, limit: int = 140) -> str:
 
 # ── Həssaslıq və zərərsizlik ────────────────────────────────────────────────
 
+SEVERITY_ORDER = {"yuksek": 3, "orta": 2, "asagi": 1}
+
+
 def rule_sensitivity(ctx: Context) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Həssaslıq: hər ssenari planın öz metodu ilə yenidən hesablanır (scenario.py). Ümumi tapıntı XÜLASƏDİR
+    (summary): sual vermir və bayraq sayına daxil edilmir; ciddiliyi ən ciddi ssenarininkidir."""
     rid, title = "hessasliq", "Həssaslıq: NPV < 0 olan ssenarilər"
-    formula = "hər ssenaridə dəyişdirilmiş FCFF ilə NPV yenidən hesablanır"
-    rate = ctx.claimed.get("discount_rate_pct")
-    if not ctx.flows or rate is None:
+    formula = "hər ssenaridə pul axını planın metodu ilə yenidən qurulur (vergi, dövriyyə kapitalı, qalıq dəyər) və NPV hesablanır"
+    m = ctx.scenario_model()
+    if m is None:
         return _missing(rid, "hessasliq", title, formula, ["pul axını (FCFF) və ya diskont dərəcəsi"]), []
-    cap = ctx.claimed.get("practical_capacity_t")
-    margin = (ctx.f.get("margin_per_t") or {}).get("value")
-    rows = sensitivity.scenarios(ctx.years, ctx.flows, rate, ctx.aligned("revenue"), ctx.aligned("raw_material_cost"),
-                                 ctx.aligned("sales_volume_t"), margin, cap)
+    rows = scenario.scenarios(m)
+    rate = m["rate_pct"]
     base = sum(f / (1 + rate / 100) ** t for t, f in enumerate(ctx.flows))
     negative = [r for r in rows if r.get("negative")]
-    numbers = [calc_number("Baza NPV (kodun hesabı)", base, "manat", "Σ FCFF_t / (1+r)^t")]
+    numbers = [calc_number("Baza NPV", base, "manat", "Σ FCFF_t / (1+r)^t")]
     numbers += [calc_number(r["title"], r["npv"], "manat", r["formula"]) for r in rows if r["status"] == "ok"]
     if not negative:
         return finding(rid, "hessasliq", title, "ok", formula=formula, numbers=numbers,
-                       result="Heç bir ssenaridə NPV mənfi olmur. " + sensitivity.ASSUMPTION), rows
-    severity = "yuksek" if len(negative) >= 2 else "orta"
+                       result="Heç bir ssenaridə NPV mənfi olmur. " + scenario.ASSUMPTIONS, extra={"summary": True}), rows
+    levels = [r["severity"] for r in rows if r.get("severity")]
+    severity = max(levels, key=lambda lv: SEVERITY_ORDER[lv]) if levels else "orta"
     names = ", ".join(f"{lower_first(r['title'])} ({num(r['npv'])} manat)" for r in negative)
-    # Ümumi tapıntı risk üçündür, sual vermir: hər NPV < 0 ssenarisinin öz sualı və sənədi var.
     return finding(rid, "hessasliq", title, "flag", severity=severity, formula=formula, numbers=numbers,
                    result=f"{len(negative)} ssenaridə NPV mənfidir: {names}. Hər ssenari üzrə ayrıca sual verilir. "
-                          + sensitivity.ASSUMPTION), rows
+                          + scenario.ASSUMPTIONS, extra={"summary": True}), rows
 
 
 #: NPV < 0 ssenarisi üzrə sual — riskin necə idarə olunacağı (rəqəmlər ssenaridən).
@@ -675,15 +707,24 @@ def scenario_findings(rows: list[dict[str, Any]], ctx: Context) -> list[dict[str
         if not r.get("negative"):
             continue
         out.append(finding(
-            f"hessasliq:{r['id']}", "hessasliq", f"Həssaslıq: {lower_first(r['title'])}", "flag", severity="orta",
+            f"hessasliq:{r['id']}", "hessasliq", f"Həssaslıq: {lower_first(r['title'])}", "flag",
+            severity=r.get("severity") or "orta",
             formula=r["formula"],
-            numbers=[calc_number("Baza NPV (kodun hesabı)", base, "manat", "Σ FCFF_t / (1+r)^t"),
+            numbers=[calc_number("Baza NPV", base, "manat", "Σ FCFF_t / (1+r)^t"),
                      calc_number(r["title"], r["npv"], "manat", r["formula"]),
                      calc_number("ΔNPV", r["delta"], "manat", "ssenari NPV − baza NPV")],
-            result=f"Bu ssenaridə NPV mənfidir: {num(r['npv'])} manat. " + sensitivity.ASSUMPTION,
+            result=f"Bu ssenaridə NPV mənfidir: {num(r['npv'])} manat"
+                   + (f"; NPV sıfıra {_threshold_text(r['threshold'])} enir" if r.get("threshold") else "")
+                   + ". " + scenario.ASSUMPTIONS,
             question=SCENARIO_QUESTIONS.get(r["id"], "{npv}").format(npv=num(r["npv"]), base=num(base)),
-            extra={"scenario": r["id"]}))
+            extra={"scenario": r["id"], "threshold": r.get("threshold")}))
     return out
+
+
+def _threshold_text(t: dict[str, Any]) -> str:
+    if t["kind"] == "level":
+        return f"gücdən istifadə {num(t['value'], 1)}%-ə düşəndə"
+    return f"dəyişmə {'+' if t['value'] > 0 else '−'}{num(abs(t['value']), 1)}% olanda"
 
 
 def rule_break_even(ctx: Context) -> tuple[dict[str, Any], dict[str, Any] | None]:
@@ -797,8 +838,9 @@ def evaluate(doc: dict[str, Any], facts: dict[str, Any], finance: dict[str, Any]
         f["documents"] = required_documents(f)
     rate = ctx.claimed.get("discount_rate_pct")
     base = sensitivity.base_case(ctx.flows, rate) if ctx.flows and rate is not None else None
-    return {"findings": findings, "sensitivity": {"scenarios": scenarios, "assumption": sensitivity.ASSUMPTION,
-                                                 "break_even": be, "base": base},
+    return {"findings": findings, "sensitivity": {"scenarios": scenarios, "assumption": scenario.ASSUMPTIONS,
+                                                 "break_even": be, "base": base, "model": ctx.scenario_model(),
+                                                 "severity_limits": [list(x) for x in scenario.SEVERITY_LIMITS]},
             "risk": risk_level(findings, scenarios, ctx)}
 
 
@@ -817,7 +859,7 @@ def required_documents(f: dict[str, Any]) -> list[str]:
 def risk_level(findings: list[dict[str, Any]], scenarios: list[dict[str, Any]], ctx: Context) -> dict[str, Any]:
     """Qayda: yüksək — 'yüksək' ciddilikli bayraq, ≥ 2 ssenaridə NPV < 0 və ya baza NPV < 0;
     orta — 'orta' bayraq və ya 1 ssenaridə NPV < 0; əks halda aşağı."""
-    flags = [f for f in findings if f["status"] == "flag"]
+    flags = [f for f in findings if f["status"] == "flag" and not f.get("summary")]
     negative = [s for s in scenarios if s.get("negative")]
     reasons = []
     base_negative = False

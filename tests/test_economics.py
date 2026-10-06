@@ -603,8 +603,8 @@ def test_xəritə_tamdır_və_yalnız_tanınan_sənədlər_istifadə_olunur():
     produced = set(EXPECTED_DOCS) | {"gelir_hecm_qiymet", "hecm_guc", "guc_rampasi", "xammal_xerci",
                                      "emek_haqqi_fondu", "amortizasiya", "proqnoz_ufuqu"}
     assert produced <= set(data["qaydalar"])                              # hər qaydanın sətri var
-    from app.economics.sensitivity import SCENARIOS
-    assert {sid for sid, _t, _f in SCENARIOS} == set(data["hessasliq_ssenarileri"])
+    from app.economics.scenario import SCENARIOS
+    assert {sc[0] for sc in SCENARIOS} == set(data["hessasliq_ssenarileri"])
     for section in ("qaydalar", "hessasliq_ssenarileri", "realliq"):
         for key, docs in data[section].items():
             assert set(docs or []) <= set(catalog.DOCUMENTS), (section, key)
@@ -647,41 +647,31 @@ def test_toxunulmamış_köhnə_qayda_sualı_silinir_toxunulmuşu_qalır():
     assert after["b"]["stale"] is True                                     # komitə toxunub — saxlanıldı
 
 
-# ── Həssaslıq: sıfır həddi və baza sətri (kodun hesabı) ─────────────────────
+# ── Həssaslıq: baza sətri; ssenari modelinin testləri tests/test_scenario.py-dadır ─────
 
-def test_sıfır_həddi_npv_ni_həqiqətən_sıfıra_endirir():
-    from app.economics import sensitivity
-    from app.finance_tools import npv
-    flows = [-1000.0, 450.0, 450.0, 450.0]                              # baza NPV > 0 (≈ 119)
-    revenue = [0.0, 2000.0, 2000.0, 2000.0]
-    raw = [0.0, 1000.0, 1000.0, 1000.0]
-    volume = [0.0, 1000.0, 1000.0, 1000.0]
-    rate = 10.0
-    rows = {r["id"]: r for r in sensitivity.scenarios(YEARS, flows, rate, revenue, raw, volume, 1.0, 1000.0)}
-    price = rows["price_-10"]["threshold"]
-    assert price["kind"] == "change" and price["value"] < 0
-    assert abs(npv(rate, [f + price["value"] / 100 * r for f, r in zip(flows, revenue)])) < 1e-6
-    raw_t = rows["raw_+10"]["threshold"]["value"]
-    assert abs(npv(rate, [f - raw_t / 100 * m for f, m in zip(flows, raw)])) < 1e-6
-    capex = rows["capex_+15"]["threshold"]["value"]
-    assert abs(npv(rate, [flows[0] * (1 + capex / 100), *flows[1:]])) < 1e-6
-    assert rows["delay_1y"]["threshold"] is None                         # gecikmənin kəsilməz həddi yoxdur
-
-
-def test_güc_istifadəsinin_sıfır_həddi_bisection_ilə():
-    from app.economics import sensitivity
-    from app.finance_tools import npv
-    flows = [-1000.0, 600.0, 600.0, 600.0]
-    volume = [0.0, 1000.0, 1000.0, 1000.0]
-    t = sensitivity.zero_threshold("capacity_80", flows, 10.0, None, None, volume, 1.0, 1000.0)
-    assert t["kind"] == "level" and 0 < t["value"] < 100
-    cap = t["value"] / 100 * 1000.0
-    assert abs(npv(10.0, [f - (v - min(v, cap)) * 1.0 for f, v in zip(flows, volume)])) < 1e-3
+def test_həssaslıq_tapıntısı_xülasədir_və_ən_ciddi_ssenarinin_dərəcəsini_alır():
+    years = [2027, 2028, 2029, 2030]
+    fragile = claimed_finance(flows=(-1000, 380, 380, 380), practical_capacity_t=1000)
+    rows_ = {"revenue": row(years, [0, 2000, 2000, 2000]), "raw_material_cost": row(years, [0, 1000, 1000, 1000]),
+             "sales_volume_t": row(years, [0, 1000, 1000, 1000], "ton")}
+    result = rules.evaluate(EMPTY, {"figures": {"margin_per_t": fact(1, "manat/t")}, "rows": rows_, "statements": {}},
+                            fragile)
+    by_id = {f["id"]: f for f in result["findings"]}
+    summary = by_id["hessasliq"]
+    assert summary["summary"] is True and summary["question"] is None
+    scen = [f for f in result["findings"] if f["id"].startswith("hessasliq:")]
+    order = {"yuksek": 3, "orta": 2, "asagi": 1}
+    assert summary["severity"] == max((f["severity"] for f in scen), key=order.get)
+    for f in scen:                                                     # hər sualın öz ciddiliyi — ssenarinin həddindən
+        s_ = next(r for r in result["sensitivity"]["scenarios"] if r["id"] == f["scenario"])
+        assert f["severity"] == (s_["severity"] or "orta")
+    assert result["sensitivity"]["model"]["flows"] == [-1000.0, 380.0, 380.0, 380.0]
 
 
 def test_baza_npv_mənfidirsə_hədd_yoxdur_və_baza_sətri():
-    from app.economics import sensitivity
-    assert sensitivity.zero_threshold("price_-10", [-1000.0, 10.0], 10.0, [0.0, 100.0], None, None, None, None) is None
+    from app.economics import scenario, sensitivity
+    m = scenario.model_inputs([2027, 2028], [-1000.0, 10.0], 10.0, revenue=[0.0, 100.0])
+    assert scenario.zero_threshold(m, "price") is None
     base = sensitivity.base_case([-1000.0, 600.0, 600.0], 10.0)
     assert round(base["npv"], 2) == round(-1000 + 600 / 1.1 + 600 / 1.21, 2) and base["irr"] > 10
     out = rules.evaluate(EMPTY, {"figures": {}, "rows": {}, "statements": {}}, claimed_finance())

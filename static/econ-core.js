@@ -35,8 +35,14 @@
     return (list || []).slice().sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || (sev(a.severity) - sev(b.severity)));
   }
 
+  /** Diqqət tələb edən tapıntı — tab nişanı və "Bayraqlar və suallar" EYNİ qaydanı işlədir.
+   *  Ümumi həssaslıq tapıntısı (summary) xülasədir: sayılmır, ssenarilərin hər biri ayrıca sayılır. */
+  function needsAction(f) {
+    return !f.summary && (f.status === 'flag' || (f.status === 'info' && !!f.question));
+  }
+
   const FINDING_FILTERS = [
-    { id: 'flag', label: 'Bayraqlar və suallar', test: (f) => f.status === 'flag' || (f.status === 'info' && !!f.question) },
+    { id: 'flag', label: 'Bayraqlar və suallar', test: needsAction },
     { id: 'hamisi', label: 'Hamısı', test: () => true },
     { id: 'ok', label: 'Uyğun', test: (f) => f.status === 'ok' },
     { id: 'skip', label: 'Yoxlanıla bilmədi', test: (f) => f.status === 'skip' },
@@ -108,7 +114,7 @@
 
   function tabCounts(d) {
     return {
-      flags: d && d.result ? d.result.findings.filter((f) => f.status === 'flag').length : 0,
+      flags: d && d.result ? d.result.findings.filter(needsAction).length : 0,
       open: d ? d.open_questions || 0 : 0,
     };
   }
@@ -312,7 +318,7 @@
     findingFilterCounts, shortTitle, sourceText, ratio, tiles, summaryLine, tabCounts, isBusy, stateText, tornado,
     questionFilters, filterQuestions, emptyQuestionsText, evidenceFor, docRequirementStatus, excelBadge, excelMeta,
     checkBadge, statusWord, historyEntry, domId, WRITTEN_ANSWER, answerForm, SENSITIVE_PCT, mln, pct, thresholdText,
-    sensitivityBadge, sensitivityView,
+    sensitivityBadge, sensitivityView, needsAction,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EconCore = api;
