@@ -22,7 +22,6 @@
 .sidebar .plan__head { padding: var(--sp-3) var(--sp-2); }
 .sidebar .plan__head[aria-expanded="true"] { background: var(--navigation-selected); border-color: var(--navigation-line); }
 .sidebar .plan__when, .sidebar .version { color: var(--navigation-muted); }
-.sidebar .plan__name { white-space: normal; overflow-wrap: anywhere; line-height: var(--lh-sm); }
 .sidebar .plan.is-current > .plan__head { background: var(--navigation-selected); box-shadow: none; border-color: var(--navigation-line); }
 .sidebar .plan__head:hover { box-shadow: none; background: var(--navigation-surface); }
 .plansearch { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-3); border: 1px solid var(--navigation-line); border-radius: var(--r-md); background: var(--navigation-surface); }

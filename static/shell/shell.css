@@ -59,6 +59,8 @@ html { scrollbar-gutter: stable; }
 .hero__block--risk[data-tone="ok"] .hero__risk { color: var(--success-fg); }
 
 /* Möhür: ilk yüklənmədə bir dəfə (scale 1.15 → 1, rotate −4° → 0). */
+/* Status etiketi heç vaxt iki sətrə bölünmür ("Düzəliş / lazımdır"). */
+.hero__block--verdict .statuspill { white-space: nowrap; }
 .statuspill.is-stamping { animation: stampIn var(--dur-3) var(--ease-spring) both; }
 @keyframes stampIn { from { opacity: 0; transform: scale(1.15) rotate(-4deg); } to { opacity: 1; transform: none; } }
 
@@ -115,6 +117,13 @@ html { scrollbar-gutter: stable; }
 .plan { position: relative; }
 .plan__head { grid-template-columns: 10px minmax(0, 1fr) auto; }
 .plan__text { display: grid; min-width: 0; text-align: left; }
+/* Ad bir sətirdə (styles.css: ellipsis) — sətirlər eyni hündürlükdə; tam ad tooltip-dədir.
+ * Status nöqtəsi adın sətrinə hizalanır, iki sətrin ortasına yox. */
+.sidebar .plan__head { align-items: start; }
+.sidebar .plan__name { line-height: var(--lh-md); }
+.sidebar .plan__head > .sdot { margin-top: calc((var(--lh-md) - var(--sp-2)) / 2); }
+.sidebar .plan__head > .plan__count { align-self: center; }
+.sidebar .history { gap: var(--sp-1); }
 .plan__when { color: var(--ink-faint); font-size: var(--fs-xs); line-height: var(--lh-xs); }
 .plan__actions {
   position: absolute; top: 50%; right: var(--sp-1); display: flex; gap: 2px; padding: 2px; transform: translateY(-50%);

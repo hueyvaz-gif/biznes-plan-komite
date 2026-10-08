@@ -102,9 +102,11 @@
 /* ── Yoxlama haqqında (disclosure) ──────────────────────────────────────── */
 .about__btn {
   display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 40px; padding: 0 var(--sp-3); margin-top: var(--sp-2);
-  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink-soft); font: inherit; cursor: pointer;
+  /* İkinci dərəcəli düymə: başlıqlardan kiçik və sakit (əvvəl "font: inherit" ilə mobildə ən iri mətn idi). */
+  font-size: var(--fs-sm); line-height: var(--lh-sm); font-weight: 500; text-align: left;
 }
-.about__btn:hover { border-color: var(--line-strong); }
+.about__btn:hover { border-color: var(--line-strong); color: var(--ink); }
 .about__btn .icon { transition: transform var(--dur-2) var(--ease-out); }
 .about__btn[aria-expanded="true"] .icon { transform: rotate(90deg); }
 .about__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 240ms var(--ease-out); }
@@ -968,10 +970,17 @@
 .filecard__change { font-weight: 600; }
 
 .formfoot__text { display: grid; gap: var(--sp-1); min-width: 0; }
-.formfoot__why { margin: 0; color: var(--warning-fg); font-size: var(--fs-sm); line-height: var(--lh-sm); }
+/* Göstəriş xəta deyil — neytral rəng; kiçik "i" dairəsi onu izah kimi işarələyir. */
+.formfoot__why { display: flex; align-items: center; gap: var(--sp-2); margin: 0; color: var(--ink-soft); font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.formfoot__why::before {
+  content: "i"; display: grid; place-items: center; flex: none; width: var(--sp-4); height: var(--sp-4);
+  border: 1px solid var(--line-strong); border-radius: var(--r-pill); color: var(--ink-faint);
+  font-family: var(--serif); font-size: var(--fs-xs); font-style: italic; font-weight: 600; line-height: 1;
+}
 .formfoot__why:empty { display: none; }
-#submit-btn[aria-disabled="true"] { background: var(--surface-3); border-color: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
-#submit-btn[aria-disabled="true"] .icon { opacity: .6; }
+/* Deaktiv düymə accent rəngini saxlayır (nə edəcəyi bilinir), amma solğundur — "ölü" boz blok deyil. */
+#submit-btn[aria-disabled="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); opacity: .45; box-shadow: none; cursor: not-allowed; }
+#submit-btn[aria-disabled="true"]::after { display: none; }
 #submit-btn.is-pulsing { animation: submit-pulse 520ms var(--ease-out); }
 @keyframes submit-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
 @media (max-width: 640px) { .filecard { grid-template-columns: auto minmax(0, 1fr) auto; } .filecard__change { grid-column: 2; justify-self: start; } }
@@ -984,3 +993,31 @@
   .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
   .fact + .fact { padding-left: 0; border-left: 0; }
 }
+
+/* ── Yükləmə səhifəsi: kompozisiya (workspace.css-dəki #view-upload qaydalarını .view#… ilə üstələyir) ── */
+@media (min-width: 861px) {
+  /* Sol sütun (başlıq + addımlar + izah) forma kartına nisbətən şaquli mərkəzdə:
+   * 1-ci və 5-ci sıra boş "spacer"dir (minmax(0, 1fr)), məzmun 2–4-cü sıralardadır. */
+  .view#view-upload { grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr); }
+  .view#view-upload .pagehead--hero { grid-row: 2; }
+  .view#view-upload .stepper { grid-row: 3; }
+  .view#view-upload .upload-info { grid-row: 4; }
+  .view#view-upload .uplayout { grid-row: 1 / 6; }
+  .view#view-upload .pagehead__lead { margin-top: var(--sp-5); }
+  /* Düymə məzmuna görə genişlənir, sağa yaslanır; göstəriş solda qalır. */
+  .view#view-upload #submit-btn { flex: none; margin-left: auto; }
+}
+/* Rejim kartları: radio mətnlə bir xətdə, iki kart eyni hündürlükdə. */
+.view#view-upload .planmode__opt { align-items: center; padding: var(--sp-3) var(--sp-4); }
+.view#view-upload .planmode__opt input { margin-top: 0; flex: none; }
+.view#view-upload .planmode__opt strong { line-height: var(--lh-sm); }
+
+/* ── Kart başlığındakı linklər: hamısı eyni üslubda — xəttsiz, hover/fokusda xətli ── */
+.dashboard-card__head .linkbtn,
+.sumv__head > .btn--small {
+  display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 0; padding: 0;
+  border: 0; background: none; box-shadow: none; color: var(--accent);
+  font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; text-decoration: none; text-underline-offset: 3px;
+}
+.dashboard-card__head .linkbtn:hover, .dashboard-card__head .linkbtn:focus-visible,
+.sumv__head > .btn--small:hover, .sumv__head > .btn--small:focus-visible { background: none; text-decoration: underline; }

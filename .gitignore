@@ -35,3 +35,6 @@ output/
 
 # Daxili tapşırıq və yoxlama sənədləri (kökdəki Word faylları)
 /*.docx
+
+# Playwright MCP ekran görüntüləri (lokal)
+.playwright-mcp/
